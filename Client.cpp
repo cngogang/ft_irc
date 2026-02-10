@@ -1,0 +1,47 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Client.cpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/02/07 15:32:56 by ngogang           #+#    #+#             */
+/*   Updated: 2026/02/08 19:04:03 by ngogang          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "Client.hpp"
+
+    Client::Client()
+    {
+
+    }
+    Client::~Client()
+    {
+        close(this->fd_socket);
+
+    }
+
+    Client::Client(int fd) : AHost(fd)
+    {
+
+    }
+
+    Client::Client(const Client & copy)
+    {
+        if (this != &copy)
+        {
+            *this = copy;
+        } 
+    }
+    Client & Client::operator=(const Client & rightOperand)
+    {
+        this->copy_host_connection_param(rightOperand);
+        return(*this);
+        // this->fd_socket = rightOperand.fd_socket;
+    }
+    
+     void Client::Init_connection(void)
+     {
+
+     } 
