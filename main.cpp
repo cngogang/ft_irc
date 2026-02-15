@@ -5,15 +5,22 @@
 #include "Client.hpp"
 
 
-int main()
+int main(int argc, char **argv)
 {
-    // if (argc != 2)
-    //     return (1);
+    if (argc != 2)
+        return (1);
 
 
 // std::string dns(argv[1]);
+int number = 0;
+int i = 0;
+while(argv[1][i])
+{
+    number = number * 10 + (argv[1][i] - 48);
+    ++i;
+}
 
-Server IRC;
+Server IRC(number);
 
 return (0);
 
