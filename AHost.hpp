@@ -6,7 +6,7 @@
 /*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/07 15:17:09 by ngogang           #+#    #+#             */
-/*   Updated: 2026/02/08 18:48:23 by ngogang          ###   ########.fr       */
+/*   Updated: 2026/02/13 18:46:11 by ngogang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,11 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <fcntl.h>
+#include <sys/epoll.h>
+
+#define MAX_CLIENT 3000
+
 class AHost
 {
     public:
@@ -34,10 +39,11 @@ class AHost
     // void set_fd_socket4(int fd);
     // int get_fd_socket4();
     void set_fd_socket(int fd);
-    int get_fd_socket();
+    int get_fd_socket() const;
     struct sockaddr_in *get_sockaddr_in();
     struct sockaddr_in6 *get_sockaddr_in6();
-     class BindError : public std::exception
+    // void copy_host_connection_info();
+    class BindError : public std::exception
     {
                 public:
                 virtual const char *what() const throw();
@@ -49,12 +55,41 @@ class AHost
                 virtual const char *what() const throw();
                 // void printError() const throw();
     };
+
+    class EpollError : public std::exception
+    {
+                public:
+                virtual const char *what() const throw();
+                // void printError() const throw();
+    };
+
+    class ListenError : public std::exception
+    {
+                public:
+                virtual const char *what() const throw();
+                // void printError() const throw();
+    };
+
+    class EpollWaitError : public std::exception
+    {
+                public:
+                virtual const char *what() const throw();
+                // void printError() const throw();
+    };
+    class EpollCtlError : public std::exception
+    {
+                public:
+                virtual const char *what() const throw();
+                // void printError() const throw();
+    };
+    
     socklen_t size_addr;
     protected:
     struct sockaddr_in connexion_info_v4;
     struct sockaddr_in6 connexion_info_v6;
     struct addrinfo         connection_param;
     int    fd_socket;
+    struct epoll_event epoll_handler_struct;
 
 
 };

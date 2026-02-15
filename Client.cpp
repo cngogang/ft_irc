@@ -6,7 +6,7 @@
 /*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/07 15:32:56 by ngogang           #+#    #+#             */
-/*   Updated: 2026/02/08 19:04:03 by ngogang          ###   ########.fr       */
+/*   Updated: 2026/02/13 18:47:07 by ngogang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,7 @@
     Client & Client::operator=(const Client & rightOperand)
     {
         this->copy_host_connection_param(rightOperand);
+        this->set_fd_socket(rightOperand.get_fd_socket());
         return(*this);
         // this->fd_socket = rightOperand.fd_socket;
     }
