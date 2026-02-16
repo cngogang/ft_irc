@@ -82,7 +82,19 @@ class AHost
                 virtual const char *what() const throw();
                 // void printError() const throw();
     };
-    
+    class fcntlError : public std::exception
+    {
+                public:
+                virtual const char *what() const throw();
+                // void printError() const throw();
+    };
+    class recvError : public std::exception
+    {
+                public:
+                virtual const char *what() const throw();
+                // void printError() const throw();
+    };
+    static void *ft_memset(void *s, int c, size_t n);
     socklen_t size_addr;
     protected:
     struct sockaddr_in connexion_info_v4;

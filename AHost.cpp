@@ -38,21 +38,25 @@ AHost & AHost::operator=(const  AHost  & rightOperand)
 
     return (*this);
 }
+
+void * AHost::ft_memset(void *s, int c, size_t n)
+{
+    unsigned char * p = (unsigned char *)s;
+    unsigned char byte  = (unsigned char)c;
+    
+    for (size_t i = 0; i < n; ++i)
+        p[i] = byte;
+    return (s);
+}
+
+
 void AHost::memset_param_connexion()
 {
-       this->connexion_info_v4.sin_family = 0;
-       this->connexion_info_v4.sin_port = 0;
-       this->connexion_info_v4.sin_addr.s_addr = 0;
-
-       this->connexion_info_v6.sin6_family = 0;
-       this->connexion_info_v6.sin6_port = 0;
-       this->connexion_info_v6.sin6_flowinfo = 0;
-       this->connexion_info_v6.sin6_scope_id = 0;
-       for (int i = 0; i < 16; ++i)
-       {
-        this->connexion_info_v6.sin6_addr.s6_addr[i] = 0;
-       }
+    ft_memset(&(this->connexion_info_v4), 0, sizeof(this->connexion_info_v4));
+    ft_memset(&(this->connexion_info_v6), 0, sizeof(this->connexion_info_v6));
+    ft_memset(&(this->epoll_handler_struct), 0, sizeof(this->epoll_handler_struct));
 }
+
 void AHost::addrinfo_memset(struct addrinfo *ai)
 {
     ai->ai_flags = 0;
@@ -92,6 +96,15 @@ const char *AHost::ListenError::what() const throw()
 const char *AHost::EpollCtlError::what() const throw()
 {
         return ("Epoll Control issue number :");
+}
+
+const char *AHost::fcntlError::what() const throw()
+{
+        return ("fcntl issue number :");
+}
+const char *AHost::recvError::what() const throw()
+{
+        return ("recv function issue number :");
 }
 
 
