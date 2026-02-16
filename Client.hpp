@@ -26,9 +26,11 @@ class Client : public AHost
     void Init_connection(void); 
     char receive_data[1025];
     char sent_data[1025];
+    int fd_to_send;
     int byte_read;
     int byte_sent;
     struct epoll_event *epoll_handler_struct;
-
-
+    
+    private:
+    std::string nickname;
 };

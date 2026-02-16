@@ -36,7 +36,7 @@ class Server : public AHost
     void Handle_response();
     void memset_param_connexion();
     void Init_connection();
-    void Set_connexion_v4();
+    // void Set_connexion_v4();
     void Set_connexion_v6();
     void enable_IPv4_connexion();
     void make_socket_non_blocking(int fd);
@@ -44,7 +44,7 @@ class Server : public AHost
     void Add_listening_socket_to_epoll();
     void Listen_loop();
     void create_a_new_client_and_add_it_to_interest_list();
-    void add_fd_to_epoll_interest_list(int fd_epoll, int fd_to_add);
+    void add_fd_to_epoll_interest_list(int fd_epoll, int fd_to_add, int flag);
     void handle_request(int fd);
     void Create_epoll_instance_and_bind_server_socket();
     std::map<int, Client> client_line;
