@@ -12,10 +12,16 @@
 
 #pragma once
 #include "AHost.hpp"
-#include <map>
 #include <algorithm>
 
 class Client;
+class Channel;
+struct Message
+{
+    std::string prefix;
+    std::string command;
+    std::vector<std::string> params;
+};
 
 class Server : public AHost
 {
@@ -48,6 +54,9 @@ class Server : public AHost
     void handle_request(int fd);
     void Create_epoll_instance_and_bind_server_socket();
     std::map<int, Client> client_line;
+    std::map<std::string, Client*> client_line_by_nick;
+    std::map<std::string, Channel> channels_line;
+    std::string password;
     int port;
     int epoll_fd;
     
