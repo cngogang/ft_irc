@@ -20,6 +20,8 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/epoll.h>
+#include <map>
+#include <vector>
 
 #define MAX_CLIENT 3000
 

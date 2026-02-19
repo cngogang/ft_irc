@@ -30,7 +30,12 @@ class Client : public AHost
     int byte_read;
     int byte_sent;
     struct epoll_event *epoll_handler_struct;
-    
+    int hasNick;
+    int hasUser;
+    int registered;
+    // std::map<std::string, Channel>;
     private:
     std::string nickname;
+    std::string username;
+    std::string realname;
 };

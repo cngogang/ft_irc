@@ -67,6 +67,12 @@ void Server::create_a_new_client_and_add_it_to_interest_list()
 void Server::handle_request(int fd)
 {
     Client *current_client = &(this->client_line[fd]);
+    Message msg;
+    
+    if (is_register(*current_client) == -1)
+        return ;
+    msg = read_bytes_and_build_message(*current_client);
+    process_msg(msg);
 
     AHost::ft_memset(current_client->receive_data, 0, strlen(current_client->receive_data));
     current_client->byte_read = 1;
@@ -96,6 +102,9 @@ void Server::handle_request(int fd)
     get_server_response_form_stdin(current_client->sent_data);
     current_client->byte_sent = send(current_client->AHost::get_fd_socket(), current_client->sent_data, strlen(current_client->sent_data), 0);
 }
+
+
+
 
 
 void Server::Listen_loop()
