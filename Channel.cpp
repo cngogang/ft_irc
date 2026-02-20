@@ -34,5 +34,6 @@
         this->invit_only_mode = rightOperand.invit_only_mode;
         this->operators = rightOperand.operators;
         this->members = rightOperand.members;
+        return (*this);
 
     }

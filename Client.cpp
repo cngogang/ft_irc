@@ -14,7 +14,10 @@
 
     Client::Client()
     {
-
+        ft_memset(this->receive_bytes_buffer, 0,513);
+        ft_memset(this->sent_bytes_buffer, 0, 513);
+        ft_memset(this->receive_line, 0, 513);
+        ft_memset(this->sent_line, 0, 513);
     }
     Client::~Client()
     {

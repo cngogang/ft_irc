@@ -24,8 +24,10 @@ class Client : public AHost
     Client & operator=(const Client & rightOperand);
     struct sockaddr_storage client_addr;
     void Init_connection(void); 
-    char receive_data[1025];
-    char sent_data[1025];
+    char receive_bytes_buffer[513];
+    char receive_line[513];
+    char sent_bytes_buffer[513];
+    char sent_line[513];
     int fd_to_send;
     int byte_read;
     int byte_sent;

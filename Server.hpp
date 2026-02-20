@@ -14,13 +14,18 @@
 #include "AHost.hpp"
 #include <algorithm>
 
+
 class Client;
 class Channel;
+
 struct Message
 {
-    std::string prefix;
+    // std::string prefix;
     std::string command;
     std::vector<std::string> params;
+    std::string trailing_params;
+    int fd_recipient;
+    int fd_issuer;
 };
 
 class Server : public AHost
@@ -53,6 +58,11 @@ class Server : public AHost
     void add_fd_to_epoll_interest_list(int fd_epoll, int fd_to_add, int flag);
     void handle_request(int fd);
     void Create_epoll_instance_and_bind_server_socket();
+    void read_bytes_and_build_message(Client current_client);
+    int  receive_bytes(Client  & current_client);
+    int  check_errno_value(void);
+    int line_is_CRLF_termininated(const Client & current_client);
+    void build_message_object_and_proceed_it(const Client & current_client, Message & msg);
     std::map<int, Client> client_line;
     std::map<std::string, Client*> client_line_by_nick;
     std::map<std::string, Channel> channels_line;

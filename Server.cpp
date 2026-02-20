@@ -14,6 +14,7 @@
 
 #include "Server.hpp"
 #include "Client.hpp"
+#include "Channel.hpp"
 
 
 Server::Server():port(8080)
@@ -64,43 +65,196 @@ void Server::create_a_new_client_and_add_it_to_interest_list()
     add_fd_to_epoll_interest_list(this->epoll_fd, accept_return_fd, EPOLLIN | EPOLLET);
 }
 
+void Server::read_bytes_and_build_message(Client current_client)
+{
+
+}
+
+
+static int is_no_new_line(char *buffer_512_bytes)
+{
+    int i = 0;
+
+    for ( ;buffer_512_bytes[i]; ++i)
+    {
+        if (buffer_512_bytes[i] == '\n')
+            return (0);
+    }
+    if (i == 1)
+        return (0);
+    return (1);
+
+}
+
+static int copy_bytes(char *src, char *dst)
+{
+    int j = 0;
+    while (dst[j])
+        ++j;
+    int i = 0;
+    while (src[i] && (i + j) < 512)
+    {
+        dst[i + j] = src[i];
+        ++i;
+    }
+    if (i <= 512)
+    {
+        dst[i + j] = '\0';
+        return (i);
+    }    
+    else
+        return (i);
+}
+int Server::line_is_CRLF_termininated(const Client & current_client)
+{
+    int i;
+    for (i = 0; current_client.receive_line[i]; ++i)
+    {   }
+    if (current_client.receive_line[i - 1] == '\n')
+        return (1);
+    return (0);    
+}
+
+int Server::receive_bytes(Client  & current_client)
+{
+    int returned_bytes;
+    // if (is_no_new_line(current_client.receive_bytes_buffer))
+    returned_bytes = copy_bytes(current_client.receive_bytes_buffer, current_client.receive_line);   
+    AHost::ft_memset(current_client.receive_bytes_buffer, 0, strlen(current_client.receive_bytes_buffer));
+    if (returned_bytes > 512)
+    {
+        AHost::ft_memset(current_client.receive_bytes_buffer, 0, 513);
+        AHost::ft_memset(current_client.receive_line, 0, 513);
+        return (-1);
+    }
+    // AHost::ft_memset(current_client.receive_bytes_buffer, 0, strlen(current_client.receive_bytes_buffer));
+    current_client.byte_read = recv(current_client.AHost::get_fd_socket(), current_client.receive_bytes_buffer, 512, 0);
+    // returned_bytes = copy_bytes(current_client.receive_bytes_buffer, current_client.receive_line);
+
+    return (0);
+}
+
+
+
+
+
+
+
+static void extract_command_name( std::string & raw_message, Message & msg)
+{
+    std::string::iterator end_command_name;
+
+    end_command_name = std::find(raw_message.begin(), raw_message.end(), ' ');
+    msg.command.assign(raw_message.begin(), end_command_name);
+}
+
+static void extract_command_arg( std::string & raw_message, Message & msg)
+{
+    std::string::iterator colon_position;
+    std::string::iterator start_arg;
+    std::string::iterator end_arg;
+    std::string param_buff;
+
+    start_arg = std::find(raw_message.begin(), raw_message.end(), ' ');
+    if (start_arg == raw_message.end())
+        return ;
+    ++start_arg;
+    colon_position = std::find(start_arg, raw_message.end(), ':');
+    end_arg = std::find(start_arg, raw_message.end(), ' ');
+    while (end_arg != raw_message.end() && end_arg < colon_position)
+    {
+        param_buff.assign(start_arg, end_arg);
+        msg.params.push_back(param_buff);
+        start_arg = ++end_arg;
+        if (start_arg == raw_message.end())
+            break ;
+        end_arg = std::find(start_arg, raw_message.end(), ' ');
+    }
+    if (end_arg == raw_message.end())
+    {
+        param_buff.assign(start_arg, end_arg);
+        msg.params.push_back(param_buff);
+    }
+}
+
+static void extract_trailing_param( std::string & raw_message, Message & msg)
+{
+    std::string::iterator colon_position;
+
+    colon_position = std::find(raw_message.begin(), raw_message.end(), ':');
+    
+    msg.trailing_params.assign(colon_position, raw_message.end());
+}
+
+void Server::build_message_object_and_proceed_it(const Client & current_client, Message & msg)
+{
+    std::string::iterator end_c_name;
+    std::string::iterator colon_position;
+    std::string::iterator start_arg;
+    std::string::iterator end_arg;
+    std::string raw_message(current_client.receive_line);
+    std::string param_buff;
+
+    // end_command_name = std::find(raw_message.begin(), raw_message.end(), ' ');
+    // msg.command.assign(raw_message.begin(), end_command_name);
+    extract_command_name(raw_message, msg); 
+    if (msg.command.empty())
+         return ;
+    extract_command_arg(raw_message, msg);
+    if (msg.params.end() == msg.params.begin())
+         return ;
+    extract_trailing_param(raw_message, msg);
+
+    // if (colon_position != raw_message.end())
+    //     msg.trailing_params.assign(colon_position, raw_message.end());
+}
+
+int Server::check_errno_value(void)
+{
+    if (errno == EAGAIN)
+    {
+        errno = 0;
+        return (0);
+    }
+    else
+        throw recvError();
+}
+
+
+
 void Server::handle_request(int fd)
 {
     Client *current_client = &(this->client_line[fd]);
+    int  bytes_received;
     Message msg;
-    
-    if (is_register(*current_client) == -1)
-        return ;
-    msg = read_bytes_and_build_message(*current_client);
-    process_msg(msg);
 
-    AHost::ft_memset(current_client->receive_data, 0, strlen(current_client->receive_data));
+    msg.fd_issuer = fd;
+
+        
+    AHost::ft_memset(current_client->receive_bytes_buffer, 0, strlen(current_client->receive_bytes_buffer));
     current_client->byte_read = 1;
-    int first_loop = 1;
+
     while (current_client->byte_read != -1)
     { 
-        AHost::ft_memset(current_client->receive_data, 0, strlen(current_client->receive_data));
-        current_client->byte_read = recv(current_client->AHost::get_fd_socket(), current_client->receive_data, 50, 0);
-        if (first_loop)
-        {
-            first_loop = 0;
-        }
-        if (current_client->byte_read == -1)
-        {
-            if (errno == EAGAIN)
-                {
-                    errno = 0;
-                    break ;
-                }
-            else
-                throw recvError();
-        }
-        std::cout << current_client->receive_data;    
+        
+        bytes_received = receive_bytes(*current_client);
+        if (bytes_received > 512)
+            return ;
+        if (line_is_CRLF_termininated(*current_client))
+            build_message_object_and_proceed_it(*current_client, msg);
+        if (current_client->byte_read == -1 && !check_errno_value())
+            break ;
+           
     }
-    std::cout << std::endl;
-    AHost::ft_memset(current_client->sent_data, 0, strlen(current_client->sent_data));
-    get_server_response_form_stdin(current_client->sent_data);
-    current_client->byte_sent = send(current_client->AHost::get_fd_socket(), current_client->sent_data, strlen(current_client->sent_data), 0);
+    std::cout << "NAME COMMAND : " << msg.command << std::endl;
+    for (std::vector<std::string>::iterator it = msg.params.begin(); it != msg.params.end(); ++it)
+    {
+        std::cout << "ARG COMMAND : " << (*it) << std::endl;
+    }
+    std::cout << "trailing param : " << msg.trailing_params << std::endl;
+    AHost::ft_memset(current_client->sent_bytes_buffer, 0, strlen(current_client->sent_bytes_buffer));
+    get_server_response_form_stdin(current_client->sent_bytes_buffer);
+    current_client->byte_sent = send(current_client->AHost::get_fd_socket(), current_client->sent_bytes_buffer, strlen(current_client->sent_bytes_buffer), 0);
 }
 
 
