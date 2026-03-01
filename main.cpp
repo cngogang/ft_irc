@@ -7,7 +7,7 @@
 
 int main(int argc, char **argv)
 {
-    if (argc != 2)
+    if (argc != 3)
         return (1);
 
 
@@ -20,7 +20,8 @@ while(argv[1][i])
     ++i;
 }
 
-Server IRC(number);
+std::string password(argv[2]);
+Server IRC(number, password);
 
 return (0);
 
