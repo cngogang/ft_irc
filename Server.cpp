@@ -6,7 +6,7 @@
 /*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/07 16:47:07 by ngogang           #+#    #+#             */
-/*   Updated: 2026/03/01 18:46:57 by ngogang          ###   ########.fr       */
+/*   Updated: 2026/03/01 18:52:05 by ngogang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,7 +112,7 @@ int Server::line_is_CRLF_termininated(const Client & current_client)
     int i;
     for (i = 0; current_client.receive_line[i]; ++i)
     {   }
-    if (current_client.receive_line[i - 1] == '\n' && current_client.receive_line[i - 2] == '\r' )
+    if (i >= 2 && current_client.receive_line[i - 1] == '\n' && current_client.receive_line[i - 2] == '\r' )
         return (1);
     return (0);    
 }
