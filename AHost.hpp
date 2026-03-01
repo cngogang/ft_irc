@@ -6,7 +6,7 @@
 /*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/07 15:17:09 by ngogang           #+#    #+#             */
-/*   Updated: 2026/02/13 18:46:11 by ngogang          ###   ########.fr       */
+/*   Updated: 2026/02/22 14:33:55 by ngogang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,6 +92,13 @@ class AHost
                 // void printError() const throw();
     };
     class recvError : public std::exception
+    {
+                public:
+                virtual const char *what() const throw();
+                // void printError() const throw();
+    };
+
+    class sendError : public std::exception
     {
                 public:
                 virtual const char *what() const throw();

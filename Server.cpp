@@ -6,7 +6,7 @@
 /*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/07 16:47:07 by ngogang           #+#    #+#             */
-/*   Updated: 2026/02/14 18:37:16 by ngogang          ###   ########.fr       */
+/*   Updated: 2026/03/01 18:46:57 by ngogang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ Server::Server():port(8080)
 {
     Run();
 }
-Server::Server(int num_port):port(num_port) 
+Server::Server(int num_port, std::string pass):port(num_port), password(pass) 
 {
     Run();
 }
@@ -35,11 +35,13 @@ Server::Server(const Server & copy)
     if(this != &copy)
         *this = copy;
 }
+
 Server & Server::operator=(const Server & rightOperand)
 {
     (void)rightOperand;
     return (*this);
 }
+
 void Server::Handle_response()
 {
     
@@ -50,7 +52,7 @@ void Server::get_server_response_form_stdin(char *msg)
     std::string str;
     std::getline(std::cin, str);
     int i = 0;
-    for (std::string::iterator it = str.begin(); it != str.end() && std::distance(str.begin(), it) < 1023; ++it, ++i)
+    for (std::string::iterator it = str.begin(); it != str.end() && std::distance(str.begin(), it) < 512; ++it, ++i)
         msg[i] = *it;
     msg[i] = '\n';
     msg[i] = '\0';
@@ -110,7 +112,7 @@ int Server::line_is_CRLF_termininated(const Client & current_client)
     int i;
     for (i = 0; current_client.receive_line[i]; ++i)
     {   }
-    if (current_client.receive_line[i - 1] == '\n')
+    if (current_client.receive_line[i - 1] == '\n' && current_client.receive_line[i - 2] == '\r' )
         return (1);
     return (0);    
 }
@@ -133,11 +135,6 @@ int Server::receive_bytes(Client  & current_client)
 
     return (0);
 }
-
-
-
-
-
 
 
 static void extract_command_name( std::string & raw_message, Message & msg)
@@ -186,7 +183,7 @@ static void extract_trailing_param( std::string & raw_message, Message & msg)
     msg.trailing_params.assign(colon_position, raw_message.end());
 }
 
-void Server::build_message_object_and_proceed_it(const Client & current_client, Message & msg)
+void Server::build_message_object_and_proceed_it(Client & current_client, Message & msg)
 {
     std::string::iterator end_c_name;
     std::string::iterator colon_position;
@@ -197,6 +194,7 @@ void Server::build_message_object_and_proceed_it(const Client & current_client, 
 
     // end_command_name = std::find(raw_message.begin(), raw_message.end(), ' ');
     // msg.command.assign(raw_message.begin(), end_command_name);
+    ft_memset(current_client.receive_line, 0, strlen(current_client.receive_line));
     extract_command_name(raw_message, msg); 
     if (msg.command.empty())
          return ;
@@ -204,7 +202,7 @@ void Server::build_message_object_and_proceed_it(const Client & current_client, 
     if (msg.params.end() == msg.params.begin())
          return ;
     extract_trailing_param(raw_message, msg);
-
+    (this->*(this->commands[msg.command]))(current_client.get_fd_socket(), msg);
     // if (colon_position != raw_message.end())
     //     msg.trailing_params.assign(colon_position, raw_message.end());
 }
@@ -252,13 +250,18 @@ void Server::handle_request(int fd)
         std::cout << "ARG COMMAND : " << (*it) << std::endl;
     }
     std::cout << "trailing param : " << msg.trailing_params << std::endl;
-    AHost::ft_memset(current_client->sent_bytes_buffer, 0, strlen(current_client->sent_bytes_buffer));
-    get_server_response_form_stdin(current_client->sent_bytes_buffer);
-    current_client->byte_sent = send(current_client->AHost::get_fd_socket(), current_client->sent_bytes_buffer, strlen(current_client->sent_bytes_buffer), 0);
 }
 
 
-
+    // std::cout << "NAME COMMAND : " << msg.command << std::endl;
+    // for (std::vector<std::string>::iterator it = msg.params.begin(); it != msg.params.end(); ++it)
+    // {
+    //     std::cout << "ARG COMMAND : " << (*it) << std::endl;
+    // }
+    // std::cout << "trailing param : " << msg.trailing_params << std::endl;
+    // AHost::ft_memset(current_client->sent_bytes_buffer, 0, strlen(current_client->sent_bytes_buffer));
+    // get_server_response_form_stdin(current_client->sent_bytes_buffer);
+    // current_client->byte_sent = send(current_client->AHost::get_fd_socket(), current_client->sent_bytes_buffer, strlen(current_client->sent_bytes_buffer), 0);
 
 
 void Server::Listen_loop()
@@ -352,7 +355,7 @@ void Server::enable_IPv4_connexion()
 void Server::Open_socket()
 {
     this->fd_socket = socket(this->connexion_info_v6.sin6_family, SOCK_STREAM, 0);
-    if (this->fd_socket == 0)
+    if (this->fd_socket == -1)
         throw SocketError(); 
 }
 
@@ -384,6 +387,7 @@ void Server::Run()
     try
     {
         Init_connection();
+        Init_command_map();
         Listen_and_handle_request();
 
     }
@@ -392,3 +396,158 @@ void Server::Run()
         std::cerr << e.what() << errno << std::endl;
     }
 }
+
+void Server::Init_command_map()
+{
+    this->commands["NICK"] = &Server::command_nick;
+    this->commands["PASS"] = &Server::command_pass;
+    this->commands["USER"] = &Server::command_user;
+    this->commands["PRIVMSG"] = &Server::command_priv_msg;
+
+}
+int Server::is_register(int fd)
+{
+    
+    std::cout << "IR NICK : " << this->client_line[fd].get_nick() << std::endl;
+    std::cout << "IR USER : " << this->client_line[fd].get_username() << std::endl;
+    std::cout << "IR PASS client : " << this->client_line[fd].get_pass() << " server : " << this->password << " bool == " << (this->password == this->client_line[fd].get_pass())  << std::endl;
+    if (this->client_line[fd].get_nick().empty() || this->client_line[fd].get_username().empty())
+        return (0);
+    if (this->client_line[fd].get_pass() != this->password)
+        return (0);
+    return (1);
+
+}
+void Server::send_message(const int & fd, const std::string & msg)
+{
+ int byte_sent;
+
+ byte_sent = send(fd, msg.c_str(), msg.size(), 0);
+ std::cout << "SEND cmd" << std::endl;
+ if (byte_sent == -1)
+    throw sendError();
+}
+
+void Server::welcome_msg(int fd)
+{
+    std::string line_1("001 Welcome message\r\n");
+    std::string line_2("002 ft_IRC\r\n");
+    std::string line_3("003 Created date\r\n");
+    std::string line_4("004 Server info\r\n");
+
+
+    send_message(fd, line_1);
+    send_message(fd, line_2);
+    send_message(fd, line_3);
+    send_message(fd, line_4);
+}
+
+static std::string trim_CRLF(std::string str)
+{
+    std::string::iterator ite;
+    ite = --str.end();
+    while (*ite == '\n' || *ite == '\r')
+        str.erase(ite--);
+    return (str);
+}
+void Server::command_pass(int fd, Message msg)
+{
+    std::string pass;
+
+    if (msg.params.size() != 1)
+    {
+        std::cerr << "Wrong number of argument : COMMAND PASS." << std::endl;
+        return ;
+    }
+    pass = trim_CRLF(msg.params[0]);
+    this->client_line[fd].set_pass(pass);
+    if (is_register(fd))
+        welcome_msg(fd);
+}
+void Server::command_nick(int fd, Message msg)
+{
+    std::string nick;
+
+    if (msg.params.size() != 1)
+    {
+        std::cerr << "Wrong number of argument : COMMAND NICK." << std::endl;
+        return ;
+    }
+    else if (this->client_line_by_nick.find(msg.params[0]) != this->client_line_by_nick.end())
+    {
+        std::cerr << "Nickname already exist : COMMAND NICK ." << std::endl;
+        return ;
+    }
+    nick = trim_CRLF(msg.params[0]);
+    this->client_line[fd].set_nick(nick);
+    this->client_line_by_nick[nick] = &(this->client_line[fd]);
+    if (is_register(fd))
+        welcome_msg(fd);
+}
+
+
+void Server::command_user(int fd, Message msg)
+{
+    std::string username;
+    
+    if (msg.params.size() != 1)
+    {
+        std::cerr << "Wrong number of argument : COMMAND USER." << std::endl;
+        return ;
+    }
+    username = trim_CRLF(msg.params[0]);
+    this->client_line[fd].set_username(username);
+    if (is_register(fd))
+        welcome_msg(fd);
+}
+
+
+void Server::send_message_to_channel(const int & fd, const Message & msg)
+{
+    std::string channel_name = msg.params[0];
+    std::map<int, Client *>::iterator it;
+    Channel target_channel;
+    std::map<int, Client *> target_channel_members;
+    
+    if (this->channels_line.find(channel_name) == this->channels_line.end())
+        return ;
+    target_channel = this->channels_line[channel_name];
+    target_channel_members = target_channel.Get_members();
+
+    for(it = target_channel_members.begin();it != target_channel_members.end() ; ++it)
+    {
+        send_message((*it).first,  msg.trailing_params);
+    } 
+}
+
+void Server::send_message_to_client(const int & fd, const Message & msg)
+{
+    std::string client_nick_name = msg.params[0];
+
+    std::cout << "THERE cmd" << std::endl;
+    if (this->client_line_by_nick.find(client_nick_name) == this->client_line_by_nick.end())
+        return ;
+    std::cout << " 2 THERE cmd" << std::endl;
+    send_message(this->client_line_by_nick[client_nick_name]->get_fd_socket(), msg.trailing_params);
+}
+
+
+
+static int is_a_channel(std::string str)
+{
+    if (str[0] == '@' || str[0] == '&')
+        return (1);
+    return (0);
+}
+
+void Server::command_priv_msg(int fd, Message msg)
+{
+    std::cout << "HERE cmd" << std::endl;
+    if (!is_register(fd))
+        return ;
+    if (is_a_channel(msg.params[0]))
+        send_message_to_channel(fd, msg);
+    else
+        send_message_to_client(fd, msg);
+}
+void command_join(int fd, Message msg);

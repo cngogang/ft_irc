@@ -6,7 +6,7 @@
 /*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/07 15:16:38 by ngogang           #+#    #+#             */
-/*   Updated: 2026/02/13 18:47:37 by ngogang          ###   ########.fr       */
+/*   Updated: 2026/02/22 14:34:10 by ngogang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,7 +106,10 @@ const char *AHost::recvError::what() const throw()
 {
         return ("recv function issue number :");
 }
-
+const char *AHost::sendError::what() const throw()
+{
+        return ("recv function issue number :");
+}
 
 // void AHost::copy_host_connection_info(const struct AHost & RightOperand)
 // {

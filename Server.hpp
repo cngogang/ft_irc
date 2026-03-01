@@ -6,7 +6,7 @@
 /*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/07 16:38:13 by ngogang           #+#    #+#             */
-/*   Updated: 2026/02/12 20:55:14 by ngogang          ###   ########.fr       */
+/*   Updated: 2026/02/22 15:52:19 by ngogang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ class Server : public AHost
 {
     public: 
     Server();
-    Server(int num_port);
+    Server(int num_port, std::string pass);
     ~Server();
     Server(const Server & copy);
     Server & operator=(const Server & rightOperand);
@@ -62,10 +62,22 @@ class Server : public AHost
     int  receive_bytes(Client  & current_client);
     int  check_errno_value(void);
     int line_is_CRLF_termininated(const Client & current_client);
-    void build_message_object_and_proceed_it(const Client & current_client, Message & msg);
+    void build_message_object_and_proceed_it(Client & current_client, Message & msg);
+    void Init_command_map();
+    void command_pass(int fd, Message msg);
+    void command_nick(int fd, Message msg);
+    void command_user(int fd, Message msg);
+    void welcome_msg(int fd);
+    int  is_register(int fd);
+    void command_priv_msg(int fd, Message msg);
+    void command_join(int fd, Message msg);
+    void send_message_to_channel(const int & fd, const Message & msg);
+    void send_message_to_client(const int & fd, const Message & msg);
+    void send_message(const int & fd, const std::string & msg);
     std::map<int, Client> client_line;
     std::map<std::string, Client*> client_line_by_nick;
     std::map<std::string, Channel> channels_line;
+    std::map<std::string, void (Server::*)(int fd, Message msg)> commands;
     std::string password;
     int port;
     int epoll_fd;

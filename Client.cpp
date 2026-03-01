@@ -6,13 +6,13 @@
 /*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/07 15:32:56 by ngogang           #+#    #+#             */
-/*   Updated: 2026/02/13 18:47:07 by ngogang          ###   ########.fr       */
+/*   Updated: 2026/02/22 15:16:56 by ngogang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Client.hpp"
 
-    Client::Client()
+    Client::Client():registered(0)
     {
         ft_memset(this->receive_bytes_buffer, 0,513);
         ft_memset(this->sent_bytes_buffer, 0, 513);
@@ -25,9 +25,12 @@
 
     }
 
-    Client::Client(int fd) : AHost(fd)
+    Client::Client(int fd) : AHost(fd), registered(0)
     {
-
+           ft_memset(this->receive_bytes_buffer, 0,513);
+        ft_memset(this->sent_bytes_buffer, 0, 513);
+        ft_memset(this->receive_line, 0, 513);
+        ft_memset(this->sent_line, 0, 513);
     }
 
     Client::Client(const Client & copy)
@@ -45,6 +48,45 @@
         // this->fd_socket = rightOperand.fd_socket;
     }
     
+    void Client::set_pass(std::string pass)
+    {
+        this->pass = pass;
+    }
+
+    std::string Client::get_pass()
+    {
+        return (this->pass);
+    }
+
+    void Client::set_nick(std::string nick)
+    {
+        this->nickname = nick;
+    }
+
+    std::string Client::get_nick()
+    {
+        return (this->nickname);
+    }
+    void Client::set_username(std::string username)
+    {
+        this->username = username;
+    }
+
+    std::string Client::get_username()
+    {
+        return (this->username);
+    }
+
+    void Client::set_realname(std::string realname)
+    {
+        this->realname = realname;
+    }
+
+    std::string Client::get_realname()
+    {
+        return (this->realname);
+    }
+
      void Client::Init_connection(void)
      {
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cngogang <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/19 16:41:02 by cngogang          #+#    #+#             */
-/*   Updated: 2026/02/19 16:41:04 by cngogang         ###   ########.fr       */
+/*   Updated: 2026/02/22 14:13:03 by ngogang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,4 +36,13 @@
         this->members = rightOperand.members;
         return (*this);
 
+    }
+    const  std::map<int, Client*> &  Channel::Get_members()
+    {
+        return (this->members);
+    }
+
+    const  std::map<int, Client*> &  Channel::Get_operators()
+    {
+        return (this->operators);
     }
