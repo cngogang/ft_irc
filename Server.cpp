@@ -60,33 +60,35 @@ void Server::get_server_response_form_stdin(char *msg)
 
 void Server::create_a_new_client_and_add_it_to_interest_list()
 {
+
     int accept_return_fd = accept(this->fd_socket, 0, 0);
+
     this->client_line[accept_return_fd];
     (this->client_line[accept_return_fd]).set_fd_socket(accept_return_fd);
     this->make_socket_non_blocking(accept_return_fd);
     add_fd_to_epoll_interest_list(this->epoll_fd, accept_return_fd, EPOLLIN | EPOLLET);
 }
 
-void Server::read_bytes_and_build_message(Client current_client)
-{
+// void Server::read_bytes_and_build_message(Client current_client)
+// {
 
-}
+// }
 
 
-static int is_no_new_line(char *buffer_512_bytes)
-{
-    int i = 0;
+// static int is_no_new_line(char *buffer_512_bytes)
+// {
+//     int i = 0;
 
-    for ( ;buffer_512_bytes[i]; ++i)
-    {
-        if (buffer_512_bytes[i] == '\n')
-            return (0);
-    }
-    if (i == 1)
-        return (0);
-    return (1);
+//     for ( ;buffer_512_bytes[i]; ++i)
+//     {
+//         if (buffer_512_bytes[i] == '\n')
+//             return (0);
+//     }
+//     if (i == 1)
+//         return (0);
+//     return (1);
 
-}
+// }
 
 static int copy_bytes(char *src, char *dst)
 {
@@ -112,7 +114,8 @@ int Server::line_is_CRLF_termininated(const Client & current_client)
     int i;
     for (i = 0; current_client.receive_line[i]; ++i)
     {   }
-    if (i >= 2 && current_client.receive_line[i - 1] == '\n' && current_client.receive_line[i - 2] == '\r' )
+    
+    if (current_client.receive_line[i - 1] == '\n')
         return (1);
     return (0);    
 }
@@ -192,6 +195,7 @@ void Server::build_message_object_and_proceed_it(Client & current_client, Messag
     std::string raw_message(current_client.receive_line);
     std::string param_buff;
 
+    std::cout << "HERE" << std::endl;
     // end_command_name = std::find(raw_message.begin(), raw_message.end(), ' ');
     // msg.command.assign(raw_message.begin(), end_command_name);
     ft_memset(current_client.receive_line, 0, strlen(current_client.receive_line));
@@ -276,8 +280,10 @@ void Server::Listen_loop()
         fd_ready = epoll_wait(this->epoll_fd, client_event, 3000, -1);
         if (fd_ready == -1)
             throw EpollWaitError();
+        // std::cout << "Befor loop stdin check " << fcntl(0, F_GETFL, 0) << std::endl;
         for(int i = 0; i < fd_ready; ++i)
         {
+            // std::cout << "In listen loop stdin check " << fcntl(0, F_GETFL, 0) << std::endl;
             if (client_event[i].data.fd == -1)
                 break ;
             else if (client_event[i].data.fd == this->fd_socket)
@@ -285,6 +291,7 @@ void Server::Listen_loop()
             else
                 handle_request(client_event[i].data.fd);    
         }
+        //  std::cout << "after listen loop stdin check " << fcntl(0, F_GETFL, 0) << std::endl;
 
     }
 } 
@@ -326,6 +333,10 @@ void Server::make_socket_non_blocking(int fd)
 {
     int original_bitmask_flags_fd;
     original_bitmask_flags_fd = fcntl(fd, F_GETFL, 0);
+    // std::cout << "Original bitmask : " << original_bitmask_flags_fd << std::endl;
+    // std::cout << "1 stdin check " << fcntl(0, F_GETFL, 0) << std::endl;
+
+
     if (original_bitmask_flags_fd == -1)
         throw fcntlError();
     if (fcntl(fd, F_SETFL, original_bitmask_flags_fd | O_NONBLOCK))
@@ -418,11 +429,12 @@ int Server::is_register(int fd)
     return (1);
 
 }
-void Server::send_message(const int & fd, const std::string & msg)
+void Server::send_message(const int & sender_fd, const int & recipient_fd, const std::string & msg)
 {
  int byte_sent;
 
- byte_sent = send(fd, msg.c_str(), msg.size(), 0);
+ (void)sender_fd;
+ byte_sent = send(recipient_fd, msg.c_str(), msg.size(), 0);
  std::cout << "SEND cmd" << std::endl;
  if (byte_sent == -1)
     throw sendError();
@@ -436,10 +448,10 @@ void Server::welcome_msg(int fd)
     std::string line_4("004 Server info\r\n");
 
 
-    send_message(fd, line_1);
-    send_message(fd, line_2);
-    send_message(fd, line_3);
-    send_message(fd, line_4);
+    send_message(0, fd, line_1);
+    send_message(0, fd, line_2);
+    send_message(0, fd, line_3);
+    send_message(0, fd, line_4);
 }
 
 static std::string trim_CRLF(std::string str)
@@ -516,7 +528,7 @@ void Server::send_message_to_channel(const int & fd, const Message & msg)
 
     for(it = target_channel_members.begin();it != target_channel_members.end() ; ++it)
     {
-        send_message((*it).first,  msg.trailing_params);
+        send_message(fd, (*it).first,  msg.trailing_params);
     } 
 }
 
@@ -528,7 +540,7 @@ void Server::send_message_to_client(const int & fd, const Message & msg)
     if (this->client_line_by_nick.find(client_nick_name) == this->client_line_by_nick.end())
         return ;
     std::cout << " 2 THERE cmd" << std::endl;
-    send_message(this->client_line_by_nick[client_nick_name]->get_fd_socket(), msg.trailing_params);
+    send_message(fd, this->client_line_by_nick[client_nick_name]->get_fd_socket(), msg.trailing_params);
 }
 
 

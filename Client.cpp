@@ -12,22 +12,28 @@
 
 #include "Client.hpp"
 
-    Client::Client():registered(0)
+    Client::Client():AHost(-1), registered(0)
     {
+        
         ft_memset(this->receive_bytes_buffer, 0,513);
         ft_memset(this->sent_bytes_buffer, 0, 513);
         ft_memset(this->receive_line, 0, 513);
         ft_memset(this->sent_line, 0, 513);
+        // std::cout << "Constructor client called " << std::endl;
     }
+
     Client::~Client()
     {
-        close(this->fd_socket);
+        // std::cout << "Destructor client called with fd == "<< this->fd_socket << std::endl;
+        if (this->fd_socket != -1)
+            close(this->fd_socket);
 
     }
 
     Client::Client(int fd) : AHost(fd), registered(0)
     {
-           ft_memset(this->receive_bytes_buffer, 0,513);
+        // std::cout << "Other Constructor client called " << std::endl;
+        ft_memset(this->receive_bytes_buffer, 0,513);
         ft_memset(this->sent_bytes_buffer, 0, 513);
         ft_memset(this->receive_line, 0, 513);
         ft_memset(this->sent_line, 0, 513);
@@ -35,6 +41,7 @@
 
     Client::Client(const Client & copy)
     {
+        //  std::cout << "Copy Constructor client called " << std::endl;
         if (this != &copy)
         {
             *this = copy;
