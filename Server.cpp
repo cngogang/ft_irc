@@ -183,7 +183,34 @@ static void extract_trailing_param( std::string & raw_message, Message & msg)
 
     colon_position = std::find(raw_message.begin(), raw_message.end(), ':');
     
-    msg.trailing_params.assign(colon_position, raw_message.end());
+    msg.trailing_params.assign(++colon_position, raw_message.end());
+}
+
+static void extract_command_prefix(std::string & raw_message, Message & msg)
+{
+    std::string prefix;
+    std::string::iterator first_space;
+    std::string::iterator e_mark;
+    std::string::iterator at;
+
+    if (*(raw_message.begin()) != ':')
+        return ;
+    first_space = std::find(raw_message.begin(), raw_message.end(), ' ');
+    if (first_space == raw_message.end())
+        return ;
+    prefix.assign(raw_message.begin(),  first_space);
+    e_mark = std::find(prefix.begin(), prefix.end(), '!');
+    if (e_mark == prefix.end())
+        return ;
+    at = std::find(prefix.begin(), prefix.end(), '!');
+    if (at == prefix.end() || at < e_mark)
+        return ;
+    msg.prefix = prefix;
+    for (std::string::iterator it = raw_message.begin(); it <= first_space ; ++it)
+    {
+        raw_message.erase(it);
+    }
+    
 }
 
 void Server::build_message_object_and_proceed_it(Client & current_client, Message & msg)
@@ -199,6 +226,10 @@ void Server::build_message_object_and_proceed_it(Client & current_client, Messag
     // end_command_name = std::find(raw_message.begin(), raw_message.end(), ' ');
     // msg.command.assign(raw_message.begin(), end_command_name);
     ft_memset(current_client.receive_line, 0, strlen(current_client.receive_line));
+    
+    extract_command_prefix(raw_message, msg);
+    if (msg.prefix.empty())
+        return ;
     extract_command_name(raw_message, msg); 
     if (msg.command.empty())
          return ;
@@ -562,4 +593,7 @@ void Server::command_priv_msg(int fd, Message msg)
     else
         send_message_to_client(fd, msg);
 }
-void command_join(int fd, Message msg);
+void Server::command_join(int fd, Message msg)
+{
+    
+}
