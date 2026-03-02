@@ -73,14 +73,14 @@ class Server : public AHost
     void command_join(int fd, Message msg);
     void send_message_to_channel(const int & fd, const Message & msg);
     void send_message_to_client(const int & fd, const Message & msg);
-    void send_message(const int & fd, const std::string & msg);
+    void send_message(const int & sender_fd, const int & recipient_fd, const std::string & msg);
     std::map<int, Client> client_line;
     std::map<std::string, Client*> client_line_by_nick;
     std::map<std::string, Channel> channels_line;
     std::map<std::string, void (Server::*)(int fd, Message msg)> commands;
-    std::string password;
     int port;
     int epoll_fd;
+    std::string password;
     
 
 };

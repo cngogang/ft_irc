@@ -64,9 +64,9 @@ void AHost::addrinfo_memset(struct addrinfo *ai)
     ai->ai_socktype = 0;
     ai->ai_protocol = 0;
     ai->ai_addrlen = 0;
-    ai->ai_addr = nullptr;
-    ai->ai_canonname = nullptr;
-    ai->ai_next = nullptr;
+    ai->ai_addr = NULL;
+    ai->ai_canonname = NULL;
+    ai->ai_next = NULL;
 }
 const char *AHost::BindError::what() const throw()
 {
@@ -153,7 +153,7 @@ struct sockaddr_in6 * AHost::get_sockaddr_in6()
     return (&(this->connexion_info_v6));
 }
 
-void AHost::copy_host_connection_param(const struct AHost & RightOperand)
+void AHost::copy_host_connection_param(const AHost & RightOperand)
 {
    this->connection_param.ai_flags = RightOperand.connection_param.ai_flags; 
    this->connection_param.ai_family = RightOperand.connection_param.ai_family; 
