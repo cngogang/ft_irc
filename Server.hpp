@@ -6,7 +6,7 @@
 /*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/07 16:38:13 by ngogang           #+#    #+#             */
-/*   Updated: 2026/02/22 15:52:19 by ngogang          ###   ########.fr       */
+/*   Updated: 2026/03/04 21:28:20 by ngogang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,6 +72,7 @@ class Server : public AHost
     void command_priv_msg(int fd, Message msg);
     void command_join(int fd, Message msg);
     void send_message_to_channel(const int & fd, const Message & msg);
+    void split_msg_and_send_it(const int & recipient_fd,  std::string & msg);
     void send_message_to_client(const int & fd, const Message & msg);
     void build_prefix_and_send_message(const int & sender_fd, const int & recipient_fd, const Message & receiveid_message);
     void join_channel(int client_fd, std::string channel_name);
