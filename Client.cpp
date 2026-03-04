@@ -94,7 +94,18 @@
         return (this->realname);
     }
 
-     void Client::Init_connection(void)
-     {
+    void Client::set_IP_adress(std::string IP)
+    {
+        this->IP_address = IP;
 
-     } 
+    }
+
+    std::string Client::get_IP_adress()
+    {   
+        return (this->IP_address);
+    }
+
+    void Client::Init_connection(void)
+    {
+        
+    } 

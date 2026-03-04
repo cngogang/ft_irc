@@ -32,6 +32,8 @@ class Client : public AHost
     std::string get_username();
     void set_realname(std::string realname);
     std::string get_realname();
+    void set_IP_adress(std::string IP);
+    std::string get_IP_adress();
     char receive_bytes_buffer[513];
     char receive_line[513];
     char sent_bytes_buffer[513];
@@ -43,8 +45,10 @@ class Client : public AHost
     int hasNick;
     int hasUser;
     int registered;
+    std::vector<std::string> Channel_list;
     // std::map<std::string, Channel>;
     private:
+    std::string IP_address;
     std::string nickname;
     std::string username;
     std::string realname;

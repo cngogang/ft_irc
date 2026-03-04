@@ -20,15 +20,20 @@ class Channel
     Channel();
     ~Channel();
     Channel(const Channel & copy);
+    Channel(Client & first_member, const int & first_member_fd, const std::string channel_name);
     Channel & operator=(const Channel & copy);
-    const  std::map<int, Client*> &  Get_members();
-    const  std::map<int, Client*> &  Get_operators();
-    
+    std::map<int, Client*> &  Get_members();
+    std::map<int, Client*> &  Get_operators();
+    void add_members(Client & first_member,  const int & first_member_fd);
+    void add_operators(Client & first_member, const int & first_member_fd);
+    void remove_members( int & member_fd);
+    int is_private();
     private :
     std::map<int, Client*> members;
     std::map<int, Client*> operators;
     std::string name;
     std::string topic;
+    std::vector<int> invitation_list;
     int invit_only_mode;
 
 };

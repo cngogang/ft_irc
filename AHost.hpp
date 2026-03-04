@@ -22,6 +22,7 @@
 #include <sys/epoll.h>
 #include <map>
 #include <vector>
+#include <algorithm>
 
 
 #define MAX_CLIENT 3000
