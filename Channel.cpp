@@ -6,7 +6,7 @@
 /*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/19 16:41:02 by cngogang          #+#    #+#             */
-/*   Updated: 2026/02/22 14:13:03 by ngogang          ###   ########.fr       */
+/*   Updated: 2026/03/04 21:35:14 by ngogang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,7 +103,10 @@
     {
         return (this->operators);
     }
-
+    std::string Channel::Get_name()
+    {
+        return (this->name);
+    }
     int Channel::is_private()
     {
         return (this->invit_only_mode);

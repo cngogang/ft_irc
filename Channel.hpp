@@ -6,7 +6,7 @@
 /*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/19 16:41:09 by cngogang          #+#    #+#             */
-/*   Updated: 2026/02/22 14:13:08 by ngogang          ###   ########.fr       */
+/*   Updated: 2026/03/04 21:35:17 by ngogang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ class Channel
     void add_operators(Client & first_member, const int & first_member_fd);
     void remove_members( int & member_fd);
     int is_private();
+    std::string Get_name();
     private :
     std::map<int, Client*> members;
     std::map<int, Client*> operators;

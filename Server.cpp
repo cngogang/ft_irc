@@ -6,7 +6,7 @@
 /*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/07 16:47:07 by ngogang           #+#    #+#             */
-/*   Updated: 2026/03/01 18:52:05 by ngogang          ###   ########.fr       */
+/*   Updated: 2026/03/04 21:43:28 by ngogang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -504,31 +504,74 @@ void Server::send_message(const int & recipient_fd, const std::string & msg)
         throw sendError();
 }
 
+static void extract_prefix(std::string & msg, std::string & prefix, std::string::iterator  *start)
+{
+    std::string::iterator first_colon;
+    std::string::iterator second_colon;
 
-static void split_msg_and_send_it(const int & recipient_fd,  std::string & msg)
+    first_colon = std::find(msg.begin(), msg.end(), ':');
+    if (first_colon == msg.end())
+        return ;
+    second_colon = std::find(first_colon + 1, msg.end(), ':');
+    if (msg.end() == second_colon)
+        return ;
+    if (start)
+        *start = second_colon + 1;
+    prefix.assign(first_colon, second_colon + 1);
+}
+
+void Server::split_msg_and_send_it(const int & recipient_fd,  std::string & msg)
 {
     std::string prefix;
-    size_t prefix_size;
+    int body_size;
     std::string buffer;
+    std::string splited_msg;
+    std::string::iterator start;
+    std::string::iterator end;
+    std::string::iterator temp;
     
-    extract_prefix(msg, prefix);
-    prefix_size = prefix.size();
-    
 
+    extract_prefix(msg, prefix, &start);
+    body_size = 510 - static_cast<int>(prefix.size());
+    end = std::find(start, msg.end(), ' ');
 
-
-}
-
-static void CRLF_end_and_send_message(const int & recipient_fd,  std::string & msg)
-{
-    if (msg.find("\r\n") == std::string::npos)
+    while (start != msg.end())
     {
-        msg.push_back('\r');
-        msg.push_back('\n');
+        while ( end - start <= body_size)
+        {
+          temp = end;
+          if (end == msg.end())
+            break ;
+          end = std::find(end + 1, msg.end(), ' ');
+        }
+        buffer.clear();
+        splited_msg.clear();
+        buffer.assign(start, temp);
+        splited_msg = prefix + buffer + "\r\n";
+        send_message(recipient_fd, splited_msg);
+        if (temp == msg.end())
+            break ;
+        start = temp + 1;
+        
     }
-    if (msg.size() > 512)
-        split_msg_and_send_it(recipient_fd,msg);
+
+
+    
+
+
+
 }
+
+// static void CRLF_end_and_send_message(const int & recipient_fd,  std::string & msg)
+// {
+//     if (msg.find("\r\n") == std::string::npos && msg.find("\n") == )
+//     {
+//         msg.push_back('\r');
+//         msg.push_back('\n');
+//     }
+//     if (msg.size() > 512)
+//         split_msg_and_send_it(recipient_fd,msg);
+// }
 
 void Server::build_prefix_and_send_message(const int & sender_fd, const int & recipient_fd, const Message & receiveid_message)
 {
@@ -764,9 +807,10 @@ void Server::command_names(int fd, Message msg)
     for (std::vector<std::string>::iterator it = list_channel.begin(); it != list_channel.begin(); ++it)
     {
         if (this->channels_line[*it].is_private()) 
-            command_response += " *";
+            command_response += " *" + this->channels_line[*it].Get_name();
         else
-            command_response += " =";
+            command_response += " =" + this->channels_line[*it].Get_name();
         add_channel_client_to_string(this->channels_line[*it], command_response);
     }
+    split_msg_and_send_it(fd,  command_response);
 }
