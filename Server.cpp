@@ -504,7 +504,22 @@ void Server::send_message(const int & recipient_fd, const std::string & msg)
         throw sendError();
 }
 
-void CRLF_end_and_send_message(const int & recipient_fd,  std::string & msg)
+
+static void split_msg_and_send_it(const int & recipient_fd,  std::string & msg)
+{
+    std::string prefix;
+    size_t prefix_size;
+    std::string buffer;
+    
+    extract_prefix(msg, prefix);
+    prefix_size = prefix.size();
+    
+
+
+
+}
+
+static void CRLF_end_and_send_message(const int & recipient_fd,  std::string & msg)
 {
     if (msg.find("\r\n") == std::string::npos)
     {
@@ -512,7 +527,7 @@ void CRLF_end_and_send_message(const int & recipient_fd,  std::string & msg)
         msg.push_back('\n');
     }
     if (msg.size() > 512)
-        // split_msg_and_send_it(const int & recipient_fd,  std::string & msg);
+        split_msg_and_send_it(recipient_fd,msg);
 }
 
 void Server::build_prefix_and_send_message(const int & sender_fd, const int & recipient_fd, const Message & receiveid_message)
