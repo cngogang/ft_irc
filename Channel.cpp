@@ -99,13 +99,25 @@
         return (this->members);
     }
 
-      std::map<int, Client*> &  Channel::Get_operators()
+    const Client *Channel::Get_operators(int fd)
+    {
+        if (this->operators.find(fd) == this->operators.end())
+            return (NULL);
+        else
+            return (this->operators[fd]);
+    } 
+    std::map<int, Client*> &  Channel::Get_operators()
     {
         return (this->operators);
     }
     std::string Channel::Get_name()
     {
         return (this->name);
+    }
+
+    void Channel::Set_name(std::string str_name)
+    {
+        this->name = str_name;
     }
     int Channel::is_private()
     {

@@ -33,7 +33,7 @@ Server::~Server()
 Server::Server(const Server & copy)
 {
     if(this != &copy)
-        *this = copy;
+    *this = copy;
 }
 
 Server & Server::operator=(const Server & rightOperand)
@@ -53,26 +53,42 @@ void Server::get_server_response_form_stdin(char *msg)
     std::getline(std::cin, str);
     int i = 0;
     for (std::string::iterator it = str.begin(); it != str.end() && std::distance(str.begin(), it) < 512; ++it, ++i)
-        msg[i] = *it;
+    msg[i] = *it;
     msg[i] = '\n';
     msg[i] = '\0';
+}
+static std::string trim_white(std::string str)
+{
+    std::string::iterator ite;
+    ite = --str.end();
+    while (*ite <= 32 )
+        str.erase(ite--);
+    return (str);
 }
 
 static std::string get_incoming_connexion_ip(struct sockaddr_storage client_addr)
 {
-char ip_str[INET6_ADDRSTRLEN];
-std::string IP_adress;
-if (client_addr.ss_family == AF_INET) {
-    struct sockaddr_in *s = (struct sockaddr_in *)&client_addr;
-    inet_ntop(AF_INET, &s->sin_addr, ip_str, sizeof(ip_str));
-} else {
-    struct sockaddr_in6 *s = (struct sockaddr_in6 *)&client_addr;
-    inet_ntop(AF_INET6, &s->sin6_addr, ip_str, sizeof(ip_str));
-}
- IP_adress = ip_str;
+    char ip_str[INET6_ADDRSTRLEN];
+    std::string IP_adress;
+    if (client_addr.ss_family == AF_INET) {
+        struct sockaddr_in *s = (struct sockaddr_in *)&client_addr;
+        inet_ntop(AF_INET, &s->sin_addr, ip_str, sizeof(ip_str));
+    } else {
+        struct sockaddr_in6 *s = (struct sockaddr_in6 *)&client_addr;
+        inet_ntop(AF_INET6, &s->sin6_addr, ip_str, sizeof(ip_str));
+    }
+    IP_adress = ip_str;
  return (IP_adress);
 }
 
+void Server::set_client_buffer(Client & client)
+{
+    ft_memset(client.receive_bytes_buffer, 0, sizeof(client.receive_bytes_buffer));
+    ft_memset(client.sent_bytes_buffer, 0, sizeof(client.sent_bytes_buffer));
+    ft_memset(client.receive_line, 0, sizeof(client.receive_line));
+    ft_memset(client.sent_line, 0, sizeof(client.sent_line));
+
+}
 void Server::create_a_new_client_and_add_it_to_interest_list()
 {
     struct sockaddr_storage client_addr;
@@ -82,6 +98,9 @@ void Server::create_a_new_client_and_add_it_to_interest_list()
     this->client_line[accept_return_fd];
     (this->client_line[accept_return_fd]).set_fd_socket(accept_return_fd);
     (this->client_line[accept_return_fd]).set_IP_adress(get_incoming_connexion_ip(client_addr));
+    
+    set_client_buffer(this->client_line[accept_return_fd]);
+    
     this->make_socket_non_blocking(accept_return_fd);
     add_fd_to_epoll_interest_list(this->epoll_fd, accept_return_fd, EPOLLIN | EPOLLET);
 }
@@ -140,9 +159,10 @@ int Server::line_is_CRLF_termininated(const Client & current_client)
 int Server::receive_bytes(Client  & current_client)
 {
     int returned_bytes;
-    // if (is_no_new_line(current_client.receive_bytes_buffer))
+
+
     returned_bytes = copy_bytes(current_client.receive_bytes_buffer, current_client.receive_line);   
-    AHost::ft_memset(current_client.receive_bytes_buffer, 0, strlen(current_client.receive_bytes_buffer));
+    AHost::ft_memset(current_client.receive_bytes_buffer, 0, 513);
     if (returned_bytes > 512)
     {
         AHost::ft_memset(current_client.receive_bytes_buffer, 0, 513);
@@ -163,6 +183,7 @@ static void extract_command_name( std::string & raw_message, Message & msg)
 
     end_command_name = std::find(raw_message.begin(), raw_message.end(), ' ');
     msg.command.assign(raw_message.begin(), end_command_name);
+    msg.command = trim_white(msg.command);
     // for (std::string::iterator it = raw_message.begin(); it <= end_command_name ; ++it)
     // {
     //     raw_message.erase(it);
@@ -177,37 +198,43 @@ static void extract_command_arg( std::string & raw_message, Message & msg)
     std::string param_buff;
 
     start_arg = std::find(raw_message.begin(), raw_message.end(), ' ');
-    if (start_arg == raw_message.end())
+    if (start_arg == raw_message.end() || start_arg == raw_message.begin())
         return ;
     ++start_arg;
     colon_position = std::find(start_arg, raw_message.end(), ':');
-    end_arg = std::find(start_arg, raw_message.end(), ' ');
-    while (end_arg != raw_message.end() && end_arg < colon_position)
+    
+    while (1)
     {
-        param_buff.assign(start_arg, end_arg);
-        msg.params.push_back(param_buff);
-        start_arg = ++end_arg;
-        if (start_arg == raw_message.end() || start_arg == colon_position)
-            break ;
+       std::cout << "1" << std::endl;
         end_arg = std::find(start_arg, raw_message.end(), ' ');
-    }
-    if (end_arg == raw_message.end())
-    {
+        std::cout << "2" << std::endl;
         param_buff.assign(start_arg, end_arg);
-        msg.params.push_back(param_buff);
+        std::cout << "3" << std::endl;
+        msg.params.push_back(trim_white(param_buff));
+        std::cout << "4" << std::endl;
+        start_arg = end_arg + 1;
+        if (end_arg == raw_message.end() || end_arg == colon_position - 1)
+            break ;
+            
     }
+    // if (end_arg == raw_message.end())
+    // {
+    //     param_buff.assign(start_arg, end_arg);
+    //     msg.params.push_back(param_buff);
+    // }
 }
 
 static void extract_trailing_param( std::string & raw_message, Message & msg)
 {
     std::string::iterator colon_position;
-
+    std::string buff;
     colon_position = std::find(raw_message.begin(), raw_message.end(), ':');
     
     if (colon_position != raw_message.end())
         ++colon_position;
     
-    msg.trailing_params.assign(colon_position, raw_message.end());
+    buff.assign(colon_position, raw_message.end());
+    msg.trailing_params = trim_white(buff);
 }
 
 // static void extract_command_prefix(std::string & raw_message, Message & msg)
@@ -249,7 +276,7 @@ void Server::build_message_object_and_proceed_it(Client & current_client, Messag
     std::cout << "HERE 1" << std::endl;
     // end_command_name = std::find(raw_message.begin(), raw_message.end(), ' ');
     // msg.command.assign(raw_message.begin(), end_command_name);
-    ft_memset(current_client.receive_line, 0, strlen(current_client.receive_line));
+    ft_memset(current_client.receive_line, 0, 513);
     
     // extract_command_prefix(raw_message, msg);
     // if (msg.prefix.empty())
@@ -260,8 +287,8 @@ void Server::build_message_object_and_proceed_it(Client & current_client, Messag
          return ;
     extract_command_arg(raw_message, msg);
         std::cout << "HERE 3" << std::endl;
-    if (msg.params.end() == msg.params.begin())
-         return ;
+    // if (msg.params.end() == msg.params.begin())
+    //      return ;
     extract_trailing_param(raw_message, msg);
         std::cout << "HERE 4" << std::endl;
     if ((this->commands).find(msg.command) != this->commands.end())
@@ -292,7 +319,7 @@ void Server::handle_request(int fd)
     msg.fd_issuer = fd;
 
         
-    AHost::ft_memset(current_client->receive_bytes_buffer, 0, strlen(current_client->receive_bytes_buffer));
+    AHost::ft_memset(current_client->receive_bytes_buffer, 0, 513);
     current_client->byte_read = 1;
 
     while (current_client->byte_read != -1)
@@ -495,10 +522,15 @@ int Server::is_register(int fd)
 
 void Server::send_message(const int & recipient_fd, const std::string & msg)
 {
-    int byte_sent;
-    
+    int byte_sent = 0;
+    std::string irc_format_msg;
+
+    if (msg.find('\n') == std::string::npos)
+        irc_format_msg = msg + "\r\n";
+    else
+        irc_format_msg = msg;
     if (msg.size())
-    byte_sent = send(recipient_fd, msg.c_str(), msg.size(), 0);
+        byte_sent = send(recipient_fd, msg.c_str(), msg.size(), 0);
 
     if (byte_sent == -1)
         throw sendError();
@@ -530,8 +562,9 @@ void Server::split_msg_and_send_it(const int & recipient_fd,  std::string & msg)
     std::string::iterator end;
     std::string::iterator temp;
     
-
+    std::cout << msg << std::endl;
     extract_prefix(msg, prefix, &start);
+    std ::cout << "HERE 5" << std::endl;
     body_size = 510 - static_cast<int>(prefix.size());
     end = std::find(start, msg.end(), ' ');
 
@@ -657,14 +690,6 @@ void Server::command_user(int fd, Message msg)
     if (is_register(fd))
         welcome_msg(fd);
 }
-static std::string trim_white(std::string str)
-{
-    std::string::iterator ite;
-    ite = --str.end();
-    while (*ite <= 32 )
-        str.erase(ite--);
-    return (str);
-}
 
 void Server::send_message_to_channel(const int & fd, const Message & msg)
 {
@@ -721,6 +746,20 @@ void Server::command_priv_msg(int fd, Message msg)
 }
 
 
+
+
+void Server::create_a_new_channel(std::map<std::string, Channel> & channel_line, Client & client, std::string channel_name_trim)
+{
+
+        std::cout << "creation channel "<< channel_name_trim << std::endl; 
+        channel_line[channel_name_trim] =  Channel(client , client.get_fd_socket(), channel_name_trim);
+        channel_line[channel_name_trim].add_operators(client , client.get_fd_socket());
+        channel_line[channel_name_trim].Set_name(channel_name_trim);
+        client.Channel_list.push_back(channel_name_trim);
+}
+
+
+
 void Server::join_channel(int client_fd, std::string channel_name)
 {
     std::string channel_name_trim = trim_white(channel_name);
@@ -728,27 +767,55 @@ void Server::join_channel(int client_fd, std::string channel_name)
         return ;
     std::cout << "join channel 2" << std::endl;
     if (this->channels_line.find(channel_name_trim) == this->channels_line.end())
-    {
-         std::cout << "creation channel "<< channel_name_trim << std::endl; 
-        this->channels_line[channel_name_trim] =  Channel(this->client_line[client_fd], client_fd, channel_name_trim);
-        this->client_line[client_fd].Channel_list.push_back(channel_name_trim);
-    }
+       create_a_new_channel(this->channels_line, this->client_line[client_fd], channel_name_trim);
     else
         {
-            std::cout << "add member channel "<< channel_name_trim  << std::endl;
             this->channels_line[channel_name_trim].add_members(this->client_line[client_fd], client_fd);
-            this->client_line[client_fd].Channel_list.push_back(channel_name_trim);
-        }
+            this->client_line[client_fd].Channel_list.push_back(channel_name_trim); 
+        }     
 }
+
+std::vector<std::string> Server::split_string(std::string str, char delimiter)
+{
+    std::stringstream ss(str);
+    std::string buffer;
+    std::vector<std::string> result;
+    while (std::getline(ss, buffer, delimiter)) {
+        result.push_back(buffer);
+    }
+
+    return result;
+}
+
 void Server::command_join(int fd, Message msg)
 {
     std::cout << "command join " << std::endl;
-    for (std::vector<std::string>::iterator it = msg.params.begin(); it != msg.params.end(); ++it)
+    std::vector<std::string> list_channel = split_string(msg.params[0], ',');
+
+    for (std::vector<std::string>::iterator it = list_channel.begin(); it != list_channel.end(); ++it)
     {
         std::cout << "command join loop " << *it << std::endl;
         join_channel(fd, *it);
     }   
 }
+
+
+
+
+
+// void Server::command_kick(int fd, Message msg)
+// {
+//     std::string channel_list;
+//     std::string client_list;
+
+
+
+
+
+
+
+// }
+
 
 void Server::part_channel(int client_fd, std::string channel_name)
 {
@@ -767,13 +834,49 @@ void Server::part_channel(int client_fd, std::string channel_name)
         }
 }
 
+
+void Server::command_kick(int fd, Message msg)
+{
+    std::vector<std::string> list_channel;
+    std::vector<std::string> list_user;
+    std::vector<std::string>::iterator channel_name_pos;
+    int user_fd;
+
+    if (msg.params.size() < 2 )
+        return ;
+    list_channel = split_string(msg.params[0], ',');
+    list_user = split_string(msg.params[1], ',');
+
+    for (std::vector<std::string>::iterator itc = list_channel.begin(); itc != list_channel.end(); ++itc)
+    {
+        if (!is_a_channel(*itc))
+            continue ;
+        if (this->channels_line.find(*itc) == this->channels_line.end())
+            continue ;
+        if (!this->channels_line[*itc].Get_operators(fd))
+            continue ;
+        for (std::vector<std::string>::iterator itu = list_user.begin(); itu != list_user.end(); ++itu)
+        {   
+            if (this->client_line_by_nick.find(*itu) == this->client_line_by_nick.end())
+                continue ;
+            channel_name_pos =  std::find(this->client_line_by_nick[*itu]->Channel_list.begin(), this->client_line_by_nick[*itu]->Channel_list.begin(), *itc);
+            user_fd = this->client_line_by_nick[*itc]->get_fd_socket();
+            this->client_line_by_nick[*itu]->Channel_list.erase(channel_name_pos);
+            this->channels_line[*itc].remove_members(user_fd);
+        }
+    }
+}
+
+
 void Server::command_part(int fd, Message msg)
 {
-    for (std::vector<std::string>::iterator it = msg.params.begin(); it != msg.params.end(); ++it)
+    std::vector<std::string> list_channel = split_string(msg.params[0], ',');
+    for (std::vector<std::string>::iterator it = list_channel.begin(); it != list_channel.end(); ++it)
     {
         part_channel(fd, *it);
     }   
 }
+
 
 static void add_channel_client_to_string(Channel & channel, std::string & msg)
 {
@@ -788,29 +891,33 @@ static void add_channel_client_to_string(Channel & channel, std::string & msg)
 }
 
 
+
 void Server::command_names(int fd, Message msg)
 {
     std::vector<std::string> list_channel;
-    std::string command_response = ":ft_irc 353 " + this->client_line[fd].get_nick();
-    if (msg.params.begin() == msg.params.end())
+    std::string command_response = ":ft_irc 353 " + this->client_line[fd].get_nick() + ":";
+    std::cout << "msg.params.size() == "<< msg.params.size() << std::endl;
+    if (!msg.params.size())
     {
         list_channel = this->client_line[fd].Channel_list;
-        for (std::map<std::string, Channel>::iterator it; it != this->channels_line.end(); ++it)
+        for (std::map<std::string, Channel>::iterator it = this->channels_line.begin(); it != this->channels_line.end(); ++it)
         {
+            std::cout << "map channel line  first " << (*it).first << " get name > " << (*it).second.Get_name() << std::endl;
             if (!(*it).second.is_private() && std::find(list_channel.begin(), list_channel.end(), (*it).first) == list_channel.end())
                 list_channel.push_back((*it).first);
         }
     }
     else
-        list_channel = msg.params;
-    
-    for (std::vector<std::string>::iterator it = list_channel.begin(); it != list_channel.begin(); ++it)
+        list_channel = split_string(msg.params[0], ',');
+    for (std::vector<std::string>::iterator it = list_channel.begin(); it != list_channel.end(); it++)
     {
-        if (this->channels_line[*it].is_private()) 
-            command_response += " *" + this->channels_line[*it].Get_name();
+        std::cout << "list channel name : " << this->channels_line[trim_white(*it)].Get_name() << std::endl;
+
+        if (this->channels_line[trim_white(*it)].is_private()) 
+            command_response += " * " + this->channels_line[trim_white(*it)].Get_name() + " :";
         else
-            command_response += " =" + this->channels_line[*it].Get_name();
-        add_channel_client_to_string(this->channels_line[*it], command_response);
+            command_response += " = " + this->channels_line[trim_white(*it)].Get_name() + " :";
+        add_channel_client_to_string(this->channels_line[trim_white(*it)], command_response);
     }
     split_msg_and_send_it(fd,  command_response);
 }

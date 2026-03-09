@@ -29,9 +29,11 @@ class Channel
     void remove_members( int & member_fd);
     int is_private();
     std::string Get_name();
+    void Set_name(std::string str_name);
+    const Client *Get_operators(int fd);
+    std::map<int, Client*> operators;
     private :
     std::map<int, Client*> members;
-    std::map<int, Client*> operators;
     std::string name;
     std::string topic;
     std::vector<int> invitation_list;

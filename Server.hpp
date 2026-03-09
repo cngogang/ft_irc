@@ -68,6 +68,7 @@ class Server : public AHost
     void command_nick(int fd, Message msg);
     void command_user(int fd, Message msg);
     void welcome_msg(int fd);
+    void command_kick(int fd, Message msg);
     int  is_register(int fd);
     void command_priv_msg(int fd, Message msg);
     void command_join(int fd, Message msg);
@@ -79,6 +80,10 @@ class Server : public AHost
     void part_channel(int client_fd, std::string channel_name);
     void command_part(int fd, Message msg);
     void command_names(int fd, Message msg);
+    void set_client_buffer(Client & client);
+    std::vector<std::string> split_string(std::string str, char delimiter);
+    // std::string trim_white(std::string str);
+    void create_a_new_channel(std::map<std::string, Channel> & channel_line, Client & client, std::string channel_name_trim);
     void send_message( const int & recipient_fd, const std::string & msg);
     std::map<int, Client> client_line;
     std::map<std::string, Client*> client_line_by_nick;
