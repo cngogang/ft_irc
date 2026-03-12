@@ -205,23 +205,13 @@ static void extract_command_arg( std::string & raw_message, Message & msg)
     
     while (1)
     {
-       std::cout << "1" << std::endl;
         end_arg = std::find(start_arg, raw_message.end(), ' ');
-        std::cout << "2" << std::endl;
         param_buff.assign(start_arg, end_arg);
-        std::cout << "3" << std::endl;
         msg.params.push_back(trim_white(param_buff));
-        std::cout << "4" << std::endl;
         start_arg = end_arg + 1;
         if (end_arg == raw_message.end() || end_arg == colon_position - 1)
-            break ;
-            
+            break ;   
     }
-    // if (end_arg == raw_message.end())
-    // {
-    //     param_buff.assign(start_arg, end_arg);
-    //     msg.params.push_back(param_buff);
-    // }
 }
 
 static void extract_trailing_param( std::string & raw_message, Message & msg)
@@ -273,28 +263,23 @@ void Server::build_message_object_and_proceed_it(Client & current_client, Messag
     std::string raw_message(current_client.receive_line);
     std::string param_buff;
 
-    std::cout << "HERE 1" << std::endl;
-    // end_command_name = std::find(raw_message.begin(), raw_message.end(), ' ');
-    // msg.command.assign(raw_message.begin(), end_command_name);
     ft_memset(current_client.receive_line, 0, 513);
-    
-    // extract_command_prefix(raw_message, msg);
-    // if (msg.prefix.empty())
-    //     return ;
     extract_command_name(raw_message, msg); 
-        std::cout << "HERE 2" << std::endl;
     if (msg.command.empty())
          return ;
     extract_command_arg(raw_message, msg);
-        std::cout << "HERE 3" << std::endl;
-    // if (msg.params.end() == msg.params.begin())
-    //      return ;
     extract_trailing_param(raw_message, msg);
-        std::cout << "HERE 4" << std::endl;
-    if ((this->commands).find(msg.command) != this->commands.end())
+
+    
+    if ((this->register_commands).find(msg.command) != this->register_commands.end())
         (this->*(this->commands[msg.command]))(current_client.get_fd_socket(), msg);
-    // if (colon_position != raw_message.end())
-    //     msg.trailing_params.assign(colon_position, raw_message.end());
+    else if ((this->commands).find(msg.command) != this->commands.end())
+    {
+        if (current_client.registered)
+            (this->*(this->commands[msg.command]))(current_client.get_fd_socket(), msg);
+        else
+            send_message(current_client.get_fd_socket(), ERR_NOTREGISTERED);
+    }
 }
 
 int Server::check_errno_value(void)
@@ -334,12 +319,6 @@ void Server::handle_request(int fd)
             break ;
            
     }
-    std::cout << "NAME COMMAND : " << msg.command << "|" << std::endl;
-    for (std::vector<std::string>::iterator it = msg.params.begin(); it != msg.params.end(); ++it)
-    {
-        std::cout << "ARG COMMAND : " << (*it) << "|" << std::endl;
-    }
-    std::cout << "trailing param : " << msg.trailing_params <<"|" << std::endl;
 }
 
 
@@ -496,9 +475,10 @@ void Server::Run()
 
 void Server::Init_command_map()
 {
-    this->commands["NICK"] = &Server::command_nick;
-    this->commands["PASS"] = &Server::command_pass;
-    this->commands["USER"] = &Server::command_user;
+    this->register_commands["NICK"] = &Server::command_nick;
+    this->register_commands["PASS"] = &Server::command_pass;
+    this->register_commands["USER"] = &Server::command_user;
+    
     this->commands["PRIVMSG"] = &Server::command_priv_msg;
     this->commands["JOIN"] = &Server::command_join;
     this->commands["PART"] = &Server::command_join;
@@ -654,35 +634,85 @@ void Server::command_pass(int fd, Message msg)
     if (is_register(fd))
         welcome_msg(fd);
 }
+
+static int is_a_valid_nickname(std::string nick)
+{
+    if (nick.size() > 9)
+        return (0);
+    for (std::string::iterator it = nick.begin(); it != nick.end(); ++it)
+    {
+        if (*it <= 97 && *it <= 175)
+            continue ;
+        else if (*it <= 91 && *it <= 95)
+            continue ;
+        else if (*it == 45)
+            continue ;
+        else if (*it <= 48 && *it <= 57)
+            continue ;
+        else 
+            return (0);
+    }
+    return (1);
+}
+
 void Server::command_nick(int fd, Message msg)
 {
     std::string nick;
 
     if (msg.params.size() != 1)
     {
-        std::cerr << "Wrong number of argument : COMMAND NICK." << std::endl;
+        send_message(fd, ERR_NONICKNAMEGIVEN);
         return ;
     }
-    else if (this->client_line_by_nick.find(msg.params[0]) != this->client_line_by_nick.end())
+    nick = trim_white(msg.params[0]);
+    if (!is_a_valid_nickname(nick))
     {
-        std::cerr << "Nickname already exist : COMMAND NICK ." << std::endl;
+        send_message(fd, ERR_ERRONEUSNICKNAME(nick));
         return ;
     }
-    nick = trim_CRLF(msg.params[0]);
+    if (this->client_line_by_nick.find(nick) != this->client_line_by_nick.end())
+    {
+        send_message(fd, ERR_NICKNAMEINUSE(nick));
+        return ;
+    }
+    if(!this->client_line[fd].get_nick().empty())
+        // send_message(RAW_NICKNAME(this->client_line[fd].get_nick(), nick, this->client_line[fd].get_username(), this->client_line[fd].get_IP_adress()));
     this->client_line[fd].set_nick(nick);
     this->client_line_by_nick[nick] = &(this->client_line[fd]);
     if (is_register(fd))
         welcome_msg(fd);
 }
 
-
+static int is_a_valid_username(std::string user)
+{
+    for (std::string::iterator it = user.begin(); it != user.end(); ++it)
+    {
+        if (*it <= 97 && *it <= 175)
+            continue ;
+        else if (*it <= 65 && *it <= 90)
+            continue ;
+        else if (*it == 45)
+            continue ;
+        else if (*it == 46)
+            continue ;
+        else if (*it == 95)
+            continue ;
+         else if (*it == 126)
+            continue ;
+        else if (*it <= 48 && *it <= 57)
+            continue ;
+        else 
+            return (0);
+    }
+    return (1);
+}
 void Server::command_user(int fd, Message msg)
 {
     std::string username;
     
     if (msg.params.size() != 1)
     {
-        std::cerr << "Wrong number of argument : COMMAND USER." << std::endl;
+       send_message(fd, ERR_NEEDMOREPARAMS(msg.command));
         return ;
     }
     username = trim_CRLF(msg.params[0]);
@@ -698,22 +728,25 @@ void Server::send_message_to_channel(const int & fd, const Message & msg)
     Channel target_channel;
     std::map<int, Client *> target_channel_members;
     std::map<int, Client *> target_channel_operators;
-    std::cout << "send msg channel > "<< msg.params[0] << std::endl;
+
     if (this->channels_line.find(channel_name) == this->channels_line.end())
         return ;
-    std::cout << "send msg channel" << std::endl;
+
     target_channel = this->channels_line[channel_name];
     target_channel_members = target_channel.Get_members();
     target_channel_operators = target_channel.Get_operators();
     for(it = target_channel_operators.begin();it != target_channel_operators.end() ; ++it)
     {
-        build_prefix_and_send_message(fd, (*it).first,  msg);
+        //build_prefix_and_send_message(fd, (*it).first,  msg);
+        send_message((*it).first, RAW_BROADCAST(this->client_line[fd].get_nick(),this->client_line[fd].get_username(), this->client_line[fd].get_IP_adress(), channel_name, msg.trailing_params));
     } 
     for(it = target_channel_members.begin();it != target_channel_members.end() ; ++it)
     {
-        build_prefix_and_send_message(fd, (*it).first,  msg);
+        send_message((*it).first, RAW_BROADCAST(this->client_line[fd].get_nick(),this->client_line[fd].get_username(), this->client_line[fd].get_IP_adress(), channel_name, msg.trailing_params));
     } 
-}
+        //build_prefix_and_send_message(fd, (*it).first,  msg);
+    } 
+
 
 void Server::send_message_to_client(const int & fd, const Message & msg)
 {
@@ -863,6 +896,7 @@ void Server::command_kick(int fd, Message msg)
             user_fd = this->client_line_by_nick[*itc]->get_fd_socket();
             this->client_line_by_nick[*itu]->Channel_list.erase(channel_name_pos);
             this->channels_line[*itc].remove_members(user_fd);
+            send_message_to_channel();
         }
     }
 }
