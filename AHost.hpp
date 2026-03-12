@@ -25,7 +25,7 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
-
+#include "Irc_format.hpp"
 #define MAX_CLIENT 3000
 
 class AHost

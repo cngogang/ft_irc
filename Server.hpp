@@ -89,6 +89,7 @@ class Server : public AHost
     std::map<std::string, Client*> client_line_by_nick;
     std::map<std::string, Channel> channels_line;
     std::map<std::string, void (Server::*)(int fd, Message msg)> commands;
+    std::map<std::string, void (Server::*)(int fd, Message msg)> register_commands; 
     int port;
     int epoll_fd;
     std::string password;
