@@ -73,7 +73,7 @@ class Server : public AHost
     void command_priv_msg(int fd, Message msg);
     void command_join(int fd, Message msg);
     void send_message_to_channel(const int & fd, const Message & msg);
-    void split_msg_and_send_it(const int & recipient_fd,  std::string & msg);
+    void split_msg_and_send_it(const int & recipient_fd, std::string  msg);
     void send_message_to_client(const int & fd, const Message & msg);
     void build_prefix_and_send_message(const int & sender_fd, const int & recipient_fd, const Message & receiveid_message);
     void join_channel(int client_fd, std::string channel_name);
@@ -82,9 +82,11 @@ class Server : public AHost
     void command_names(int fd, Message msg);
     void set_client_buffer(Client & client);
     std::vector<std::string> split_string(std::string str, char delimiter);
+    void join_names_reply(int fd, std::string channel_name);
+    void warn_the_channel(std::string channel_name, std::string msg);
     // std::string trim_white(std::string str);
     void create_a_new_channel(std::map<std::string, Channel> & channel_line, Client & client, std::string channel_name_trim);
-    void send_message( const int & recipient_fd, const std::string & msg);
+    void send_message( const int & recipient_fd, std::string  msg);
     std::map<int, Client> client_line;
     std::map<std::string, Client*> client_line_by_nick;
     std::map<std::string, Channel> channels_line;
