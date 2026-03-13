@@ -60,6 +60,8 @@ void Server::get_server_response_form_stdin(char *msg)
 static std::string trim_white(std::string str)
 {
     std::string::iterator ite;
+    if (str.begin() == str.end())
+        return (str);
     ite = --str.end();
     while (*ite <= 32 )
         str.erase(ite--);
@@ -180,7 +182,7 @@ int Server::receive_bytes(Client  & current_client)
 static void extract_command_name( std::string & raw_message, Message & msg)
 {
     std::string::iterator end_command_name;
-
+    std::cout << "ECN" << std::endl; 
     end_command_name = std::find(raw_message.begin(), raw_message.end(), ' ');
     msg.command.assign(raw_message.begin(), end_command_name);
     msg.command = trim_white(msg.command);
@@ -197,6 +199,7 @@ static void extract_command_arg( std::string & raw_message, Message & msg)
     std::string::iterator end_arg;
     std::string param_buff;
 
+    std::cout << "ECA" << std::endl;
     start_arg = std::find(raw_message.begin(), raw_message.end(), ' ');
     if (start_arg == raw_message.end() || start_arg == raw_message.begin())
         return ;
@@ -218,6 +221,7 @@ static void extract_trailing_param( std::string & raw_message, Message & msg)
 {
     std::string::iterator colon_position;
     std::string buff;
+    std::cout << "ETP" << std::endl;
     colon_position = std::find(raw_message.begin(), raw_message.end(), ':');
     
     if (colon_position != raw_message.end())
@@ -270,16 +274,19 @@ void Server::build_message_object_and_proceed_it(Client & current_client, Messag
     extract_command_arg(raw_message, msg);
     extract_trailing_param(raw_message, msg);
 
-    
+    std::cout << "HERE" << std::endl;
+    std::cout << "HERE : " << msg.command << std::endl;
     if ((this->register_commands).find(msg.command) != this->register_commands.end())
-        (this->*(this->commands[msg.command]))(current_client.get_fd_socket(), msg);
+        (this->*(this->register_commands[msg.command]))(current_client.get_fd_socket(), msg);
     else if ((this->commands).find(msg.command) != this->commands.end())
     {
-        if (current_client.registered)
+        if (is_register(current_client.get_fd_socket()))
             (this->*(this->commands[msg.command]))(current_client.get_fd_socket(), msg);
         else
             send_message(current_client.get_fd_socket(), ERR_NOTREGISTERED);
     }
+    else
+        send_message(current_client.get_fd_socket(),ERR_UNKNOWNCOMMAND(msg.command));
 }
 
 int Server::check_errno_value(void)
@@ -481,8 +488,9 @@ void Server::Init_command_map()
     
     this->commands["PRIVMSG"] = &Server::command_priv_msg;
     this->commands["JOIN"] = &Server::command_join;
-    this->commands["PART"] = &Server::command_join;
+    this->commands["PART"] = &Server::command_part;
     this->commands["NAMES"] = &Server::command_names;
+    this->commands["KICK"] = &Server::command_kick;
 
 }
 int Server::is_register(int fd)
@@ -500,7 +508,7 @@ int Server::is_register(int fd)
 }
 
 
-void Server::send_message(const int & recipient_fd, const std::string & msg)
+void Server::send_message(const int & recipient_fd,  std::string msg)
 {
     int byte_sent = 0;
     std::string irc_format_msg;
@@ -509,9 +517,10 @@ void Server::send_message(const int & recipient_fd, const std::string & msg)
         irc_format_msg = msg + "\r\n";
     else
         irc_format_msg = msg;
-    if (msg.size())
+    if (msg.size() > 512)
+        split_msg_and_send_it(recipient_fd, msg);
+    else if (msg.size())
         byte_sent = send(recipient_fd, msg.c_str(), msg.size(), 0);
-
     if (byte_sent == -1)
         throw sendError();
 }
@@ -532,7 +541,7 @@ static void extract_prefix(std::string & msg, std::string & prefix, std::string:
     prefix.assign(first_colon, second_colon + 1);
 }
 
-void Server::split_msg_and_send_it(const int & recipient_fd,  std::string & msg)
+void Server::split_msg_and_send_it(const int & recipient_fd, std::string  msg)
 {
     std::string prefix;
     int body_size;
@@ -544,7 +553,6 @@ void Server::split_msg_and_send_it(const int & recipient_fd,  std::string & msg)
     
     std::cout << msg << std::endl;
     extract_prefix(msg, prefix, &start);
-    std ::cout << "HERE 5" << std::endl;
     body_size = 510 - static_cast<int>(prefix.size());
     end = std::find(start, msg.end(), ' ');
 
@@ -612,27 +620,40 @@ void Server::welcome_msg(int fd)
     send_message( fd, line_4);
 }
 
-static std::string trim_CRLF(std::string str)
-{
-    std::string::iterator ite;
-    ite = --str.end();
-    while (*ite == '\n' || *ite == '\r' )
-        str.erase(ite--);
-    return (str);
-}
+// static std::string trim_CRLF(std::string str)
+// {
+//     std::string::iterator ite;
+//     ite = --str.end();
+//     while (*ite == '\n' || *ite == '\r' )
+//         str.erase(ite--);
+//     return (str);
+// }
 void Server::command_pass(int fd, Message msg)
 {
     std::string pass;
-
+        std::cout << "HERE 2" << std::endl;
     if (msg.params.size() != 1)
     {
-        std::cerr << "Wrong number of argument : COMMAND PASS." << std::endl;
+        send_message(fd, ERR_NEEDMOREPARAMS(msg.command));
         return ;
     }
-    pass = trim_CRLF(msg.params[0]);
+    pass = trim_white(msg.params[0]);
+    if (pass != this->password)
+    {
+        send_message(fd, ERR_PASSWDMISMATCH);
+        return ;
+    }
     this->client_line[fd].set_pass(pass);
     if (is_register(fd))
         welcome_msg(fd);
+}
+
+
+
+static bool	isCharCorrect(char c)
+{
+	return (isalnum(c) || c == '-' || c == '[' || c == ']' ||
+		c == '\\' || c == '`' || c == '^' || c == '{' || c == '}');
 }
 
 static int is_a_valid_nickname(std::string nick)
@@ -641,16 +662,28 @@ static int is_a_valid_nickname(std::string nick)
         return (0);
     for (std::string::iterator it = nick.begin(); it != nick.end(); ++it)
     {
-        if (*it <= 97 && *it <= 175)
-            continue ;
-        else if (*it <= 91 && *it <= 95)
-            continue ;
-        else if (*it == 45)
-            continue ;
-        else if (*it <= 48 && *it <= 57)
-            continue ;
-        else 
+        if (!isCharCorrect(*it))
+            return(0);
+    }
+    return (1);
+}
+
+static int is_a_valid_channel_name(std::string channel_name)
+{
+    std::string::iterator it = channel_name.begin();
+    if (channel_name.size() > 50)
+        return (0);
+    if (*it != '#' && *it != '&')
+        return (0);
+     ++it;
+    for (; it != channel_name.end(); ++it)
+    {
+        if (*it < 33)
             return (0);
+        else if (*it == ':')
+            return (0);
+        else if (*it == ',')
+            return(0);
     }
     return (1);
 }
@@ -676,36 +709,36 @@ void Server::command_nick(int fd, Message msg)
         return ;
     }
     if(!this->client_line[fd].get_nick().empty())
-        // send_message(RAW_NICKNAME(this->client_line[fd].get_nick(), nick, this->client_line[fd].get_username(), this->client_line[fd].get_IP_adress()));
+        send_message(fd ,RAW_NICKNAME(this->client_line[fd].get_nick(), nick, this->client_line[fd].get_username(), this->client_line[fd].get_IP_adress()));
     this->client_line[fd].set_nick(nick);
     this->client_line_by_nick[nick] = &(this->client_line[fd]);
     if (is_register(fd))
         welcome_msg(fd);
 }
 
-static int is_a_valid_username(std::string user)
-{
-    for (std::string::iterator it = user.begin(); it != user.end(); ++it)
-    {
-        if (*it <= 97 && *it <= 175)
-            continue ;
-        else if (*it <= 65 && *it <= 90)
-            continue ;
-        else if (*it == 45)
-            continue ;
-        else if (*it == 46)
-            continue ;
-        else if (*it == 95)
-            continue ;
-         else if (*it == 126)
-            continue ;
-        else if (*it <= 48 && *it <= 57)
-            continue ;
-        else 
-            return (0);
-    }
-    return (1);
-}
+// static int is_a_valid_username(std::string user)
+// {
+//     for (std::string::iterator it = user.begin(); it != user.end(); ++it)
+//     {
+//         if (*it >= 97 && *it <= 175)
+//             continue ;
+//         else if (*it >= 65 && *it <= 90)
+//             continue ;
+//         else if (*it == 45)
+//             continue ;
+//         else if (*it == 46)
+//             continue ;
+//         else if (*it == 95)
+//             continue ;
+//          else if (*it == 126)
+//             continue ;
+//         else if (*it >= 48 && *it <= 57)
+//             continue ;
+//         else 
+//             return (0);
+//     }
+//     return (1);
+// }
 void Server::command_user(int fd, Message msg)
 {
     std::string username;
@@ -715,7 +748,7 @@ void Server::command_user(int fd, Message msg)
        send_message(fd, ERR_NEEDMOREPARAMS(msg.command));
         return ;
     }
-    username = trim_CRLF(msg.params[0]);
+    username = trim_white(msg.params[0]);
     this->client_line[fd].set_username(username);
     if (is_register(fd))
         welcome_msg(fd);
@@ -731,30 +764,37 @@ void Server::send_message_to_channel(const int & fd, const Message & msg)
 
     if (this->channels_line.find(channel_name) == this->channels_line.end())
         return ;
-
     target_channel = this->channels_line[channel_name];
     target_channel_members = target_channel.Get_members();
     target_channel_operators = target_channel.Get_operators();
     for(it = target_channel_operators.begin();it != target_channel_operators.end() ; ++it)
     {
-        //build_prefix_and_send_message(fd, (*it).first,  msg);
         send_message((*it).first, RAW_BROADCAST(this->client_line[fd].get_nick(),this->client_line[fd].get_username(), this->client_line[fd].get_IP_adress(), channel_name, msg.trailing_params));
     } 
     for(it = target_channel_members.begin();it != target_channel_members.end() ; ++it)
     {
         send_message((*it).first, RAW_BROADCAST(this->client_line[fd].get_nick(),this->client_line[fd].get_username(), this->client_line[fd].get_IP_adress(), channel_name, msg.trailing_params));
     } 
-        //build_prefix_and_send_message(fd, (*it).first,  msg);
-    } 
+} 
 
 
 void Server::send_message_to_client(const int & fd, const Message & msg)
 {
-    std::string client_nick_name = msg.params[0];
+    std::string client_nick_name = trim_white(msg.params[0]);
+    std::string sender;
+    std::string sender_IP;
+    std::string receiver;
+    std::string raw_msg;
 
     if (this->client_line_by_nick.find(client_nick_name) == this->client_line_by_nick.end())
         return ;
-    build_prefix_and_send_message(fd, this->client_line_by_nick[client_nick_name]->get_fd_socket(), msg);
+
+    sender = this->client_line[fd].get_nick();
+    sender_IP = this->client_line[fd].get_IP_adress();
+    receiver =  this->client_line_by_nick[client_nick_name]->get_nick();
+    raw_msg = trim_white(msg.trailing_params);
+    send_message(this->client_line_by_nick[client_nick_name]->get_fd_socket(), RAW_PRIVMSG(sender, sender_IP, receiver,raw_msg));
+
 }
 
 
@@ -793,18 +833,45 @@ void Server::create_a_new_channel(std::map<std::string, Channel> & channel_line,
 
 
 
+
+void Server::warn_the_channel(std::string channel_name, std::string msg)
+{
+    std::map<int, Client *> operators_list = this->channels_line[channel_name].Get_operators();
+    std::map<int, Client *> members_list = this->channels_line[channel_name].Get_members();
+
+    for (std::map<int, Client *>::iterator it = operators_list.begin(); it != operators_list.end(); ++it)
+    {
+        send_message((*it).first, msg);
+    }
+    for (std::map<int, Client *>::iterator it = members_list.begin(); it != members_list.end(); ++it)
+    {
+        send_message((*it).first, msg);
+    }
+
+}
+
+
 void Server::join_channel(int client_fd, std::string channel_name)
 {
     std::string channel_name_trim = trim_white(channel_name);
-    if (!is_a_channel(channel_name_trim))
-        return ;
-    std::cout << "join channel 2" << std::endl;
+    if (!is_a_valid_channel_name(channel_name_trim))
+      {
+        send_message(client_fd, ERR_BADCHANMASK(channel_name));
+        return ;        
+      }
     if (this->channels_line.find(channel_name_trim) == this->channels_line.end())
        create_a_new_channel(this->channels_line, this->client_line[client_fd], channel_name_trim);
     else
         {
-            this->channels_line[channel_name_trim].add_members(this->client_line[client_fd], client_fd);
-            this->client_line[client_fd].Channel_list.push_back(channel_name_trim); 
+            if(this->channels_line[channel_name_trim].add_members(this->client_line[client_fd], client_fd) == -1)
+                send_message(client_fd, ERR_INVITEONLYCHAN(channel_name));
+            else 
+                {
+                    this->client_line[client_fd].Channel_list.push_back(channel_name_trim);
+                    warn_the_channel(channel_name_trim, RAW_JOIN(this->client_line[client_fd].get_nick(), this->client_line[client_fd].get_username(), this->client_line[client_fd].get_IP_adress(), channel_name));
+                    join_names_reply(client_fd,  channel_name_trim);
+                }
+
         }     
 }
 
@@ -834,22 +901,6 @@ void Server::command_join(int fd, Message msg)
 
 
 
-
-
-// void Server::command_kick(int fd, Message msg)
-// {
-//     std::string channel_list;
-//     std::string client_list;
-
-
-
-
-
-
-
-// }
-
-
 void Server::part_channel(int client_fd, std::string channel_name)
 {
     std::string channel_name_trim = trim_white(channel_name);
@@ -857,8 +908,16 @@ void Server::part_channel(int client_fd, std::string channel_name)
     if (!is_a_channel(channel_name_trim))
         return ;
     std::cout << "join channel 2" << std::endl;
-    if (this->channels_line.find(channel_name_trim) == this->channels_line.end() || channel_name_pos == this->client_line[client_fd].Channel_list.end())
+    if (this->channels_line.find(channel_name_trim) == this->channels_line.end()) 
+    {
+        send_message(client_fd, ERR_NOSUCHCHANNEL(channel_name_trim));
         return ;
+    }
+    else if(channel_name_pos == this->client_line[client_fd].Channel_list.end())
+        {
+            send_message(client_fd, ERR_NTONCHANNEL(this->client_line[client_fd].get_nick(), channel_name_trim));
+            return ;
+        }
     else
         {
             std::cout << "add member channel "<< channel_name_trim  << std::endl;
@@ -883,20 +942,36 @@ void Server::command_kick(int fd, Message msg)
     for (std::vector<std::string>::iterator itc = list_channel.begin(); itc != list_channel.end(); ++itc)
     {
         if (!is_a_channel(*itc))
-            continue ;
+            {
+                send_message(fd, ERR_BADCHANMASK(*itc));
+                continue ;
+            }
         if (this->channels_line.find(*itc) == this->channels_line.end())
-            continue ;
+            {
+                send_message(fd, ERR_NOSUCHCHANNEL(*itc));	
+                continue ;
+            }
         if (!this->channels_line[*itc].Get_operators(fd))
-            continue ;
+            {
+                send_message(fd, ERR_CHANOPRIVSNEEDED(*itc));
+                continue ;
+            }
         for (std::vector<std::string>::iterator itu = list_user.begin(); itu != list_user.end(); ++itu)
         {   
             if (this->client_line_by_nick.find(*itu) == this->client_line_by_nick.end())
+               {
+                send_message(fd, ERR_USERNOTINCHANNEL(this->client_line[fd].get_nick(), *itu, *itc));
                 continue ;
+               } 
             channel_name_pos =  std::find(this->client_line_by_nick[*itu]->Channel_list.begin(), this->client_line_by_nick[*itu]->Channel_list.begin(), *itc);
             user_fd = this->client_line_by_nick[*itc]->get_fd_socket();
             this->client_line_by_nick[*itu]->Channel_list.erase(channel_name_pos);
             this->channels_line[*itc].remove_members(user_fd);
-            send_message_to_channel();
+            if (!this->channels_line[*itc].get_size())
+                this->channels_line.erase(*itc);
+            else
+                warn_the_channel(*itc, RPL_KICK(this->client_line[fd].get_nick(), *itu, *itc,  msg.trailing_params));
+            
         }
     }
 }
@@ -924,6 +999,13 @@ static void add_channel_client_to_string(Channel & channel, std::string & msg)
     }
 }
 
+void Server::join_names_reply(int fd, std::string channel_name)
+{
+    std::string names;
+    add_channel_client_to_string(this->channels_line[channel_name], names);
+    send_message(fd, RPL_NAMREPLY(this->client_line[fd].get_nick(), channel_name, names));
+    send_message(fd, RPL_ENDOFNAMES(this->client_line[fd].get_nick(), channel_name));
+}
 
 
 void Server::command_names(int fd, Message msg)

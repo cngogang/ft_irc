@@ -12,6 +12,9 @@
 
 #pragma once 
 #include "AHost.hpp"
+#include "Client.hpp"
+
+
 class Client;
 
 class Channel
@@ -24,20 +27,23 @@ class Channel
     Channel & operator=(const Channel & copy);
     std::map<int, Client*> &  Get_members();
     std::map<int, Client*> &  Get_operators();
-    void add_members(Client & first_member,  const int & first_member_fd);
+    int add_members(Client & first_member,  const int & first_member_fd);
     void add_operators(Client & first_member, const int & first_member_fd);
     void remove_members( int & member_fd);
     int is_private();
+    int get_size();
     std::string Get_name();
     void Set_name(std::string str_name);
     const Client *Get_operators(int fd);
-    std::map<int, Client*> operators;
     private :
-    std::map<int, Client*> members;
+    std::vector<int> host;
+    std::map<int, Client*> operators;
+    std::map<int, Client*> members; 
     std::string name;
     std::string topic;
     std::vector<int> invitation_list;
     int invit_only_mode;
+    // int size;
 
 };
 

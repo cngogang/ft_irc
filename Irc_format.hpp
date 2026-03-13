@@ -28,7 +28,7 @@
 # define ERR_NEEDMOREPARAMS(command)	"461 " + command + " :Not enough parameters\r\n"
 
 # define RAW_PRIVMSG(sender, hostname, receiver, message) \
-	":" + sender + "!~" + sender + "@" + hostname + " PRIVMSG " + receiver + " " + message + "\r\n"
+	":" + sender + "!~" + sender + "@" + hostname + " PRIVMSG " + receiver + " :" + message + "\r\n"
 
 # define RAW_BROADCAST(sender, username, hostname, channel, message) \
 	":" + sender + "!~" + username + "@" + hostname + " PRIVMSG " + channel + " :" + message + "\r\n"
@@ -71,10 +71,10 @@
 	":" + nickname + "!~" + username + "@" + hostname + " JOIN :" + channel + "\r\n"
 
 # define RPL_NAMREPLY(target, channel, names) \
-	":ft_irc.nanachi 353 " + target + " = " + channel + " :" + names + "\r\n"
+	":ft_irc 353 " + target + " = " + channel + " :" + names + "\r\n"
 
 # define RPL_ENDOFNAMES(target, channel) \
-	":ft_irc.nanachi 366 " + target + " " + channel + " :End of /NAMES list.\r\n"
+	":ft_irc 366 " + target + " " + channel + " :End of /NAMES list.\r\n"
 
 // ========================================================================== //
 //     MODE                                                                   //
@@ -98,20 +98,20 @@
 //     TOPIC                                                                  //
 // ========================================================================== //
 
-# define RPL_NOTOPIC(nickname, channel) ":ft_irc.nanachi 331 " + nickname + " " + channel + " :No topic is set\r\n"
+# define RPL_NOTOPIC(nickname, channel) ":ft_irc 331 " + nickname + " " + channel + " :No topic is set\r\n"
 
 # define RAW_TOPIC(nickname, username, hostname, channel, topic) \
 	":" + nickname + "!~" + username + "@" + hostname + " TOPIC " + channel + " :" + topic + "\r\n"
 
 # define RPL_TOPIC(nickname, channel, topic) \
-	":ft_irc.nanachi 332 " + nickname + " " + channel + " :" + topic + "\r\n"
+	":ft_irc 332 " + nickname + " " + channel + " :" + topic + "\r\n"
 
 // ========================================================================== //
 //     INVITE                                                                 //
 // ========================================================================== //
 
 # define RPL_INVITING(inviter, invited, channel) \
-    ":ft_irc.nanachi 341 " + std::string(inviter) + " " + std::string(invited) + " " + std::string(channel) + "\r\n"
+    ":ft_irc 341 " + std::string(inviter) + " " + std::string(invited) + " " + std::string(channel) + "\r\n"
 
 # define INVITE_MESSAGE(inviter, invited, channel) \
     ":" + std::string(inviter) + "!~" + inviter + "@host INVITE " + std::string(invited) + " :" + std::string(channel) + "\r\n"
@@ -122,3 +122,10 @@
 
 # define RPL_KICK(kicker, target, channel, comment) \
     ":" + std::string(kicker) + "!~" + std::string(kicker) + "@host KICK " + std::string(channel) + " " + std::string(target) + " :" + std::string(comment) + "\r\n"
+
+# define ERR_NTONCHANNEL(nickname, channel) \
+	"442 " + nickname + " " + channel + " :You're not on that channel\r\n" 
+
+# define ERR_USERNOTINCHANNEL(kicker, target, channel) \
+	":ft_irc 441 " + kicker + " " + target + " " + channel + " :They aren't on that channel\r\n"    
+	
