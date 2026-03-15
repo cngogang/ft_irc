@@ -6,7 +6,7 @@
 /*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/09 13:19:40 by cngogang          #+#    #+#             */
-/*   Updated: 2026/03/14 18:41:41 by ngogang          ###   ########.fr       */
+/*   Updated: 2026/03/15 18:36:37 by ngogang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,11 +110,12 @@
 //     INVITE                                                                 //
 // ========================================================================== //
 
+
 # define RPL_INVITING(inviter, invited, channel) \
-    ":ft_irc 341 " + std::string(inviter) + " " + std::string(invited) + " " + std::string(channel) + "\r\n"
+    ":ft_irc 341 " + inviter + " " + invited + " " + channel + "\r\n"
 
 # define INVITE_MESSAGE(inviter, invited, channel) \
-    ":" + std::string(inviter) + "!~" + inviter + "@host INVITE " + std::string(invited) + " :" + std::string(channel) + "\r\n"
+    ":" + inviter + "!~" + inviter + "@host INVITE " + invited + " :" + channel + "\r\n"
 
 // ========================================================================== //
 //     KICK                                                                   //

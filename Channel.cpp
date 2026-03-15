@@ -6,7 +6,7 @@
 /*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/19 16:41:02 by cngogang          #+#    #+#             */
-/*   Updated: 2026/03/15 09:49:39 by ngogang          ###   ########.fr       */
+/*   Updated: 2026/03/15 18:32:32 by ngogang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@
 
     }
 
-    Channel::Channel( Client & first_member, const int & first_member_fd, const std::string channel_name): name(channel_name) , invit_only_mode(0)
+    Channel::Channel( Client & first_member, const int & first_member_fd, const std::string channel_name): invit_only_mode(0), name(channel_name)
     {
       this->operators[first_member_fd] = &first_member;
       this->host.push_back(first_member_fd);
@@ -37,7 +37,10 @@
           *this = copy;
 
     }
-
+    void Channel::add_to_invitation_list(int member_fd)
+    {
+        this->invitation_list.push_back(member_fd);
+    }
 
     int Channel::add_members(Client & first_member,  const int & first_member_fd)
     {

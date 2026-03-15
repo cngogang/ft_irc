@@ -6,7 +6,7 @@
 /*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/07 16:38:13 by ngogang           #+#    #+#             */
-/*   Updated: 2026/03/14 18:13:37 by ngogang          ###   ########.fr       */
+/*   Updated: 2026/03/15 17:50:26 by ngogang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,6 +89,9 @@ class Server : public AHost
     void set_topic(int fd, std::string channel_name, std::string topic);
     void display_topic(int fd, std::string channel_name);
     void command_topic(int fd, Message msg);
+    int invite_arg_checking(int fd, std::string member_name, std::string channel_name);
+    void command_invite(int fd, Message msg);
+    void invite_member(int fd, std::string member_name, std::string channel_name);
     void set_client_buffer(Client & client);
     void join_names_reply(int fd, std::string channel_name);
     void warn_the_channel(std::string channel_name, std::string msg);
