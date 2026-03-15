@@ -6,7 +6,7 @@
 /*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/07 16:38:13 by ngogang           #+#    #+#             */
-/*   Updated: 2026/03/04 21:28:20 by ngogang          ###   ########.fr       */
+/*   Updated: 2026/03/14 18:13:37 by ngogang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,13 @@ class Server : public AHost
     Server(const Server & copy);
     Server & operator=(const Server & rightOperand);
     void Run();
-   
+    static std::string trim_white(std::string str);
+    static bool	isCharCorrect(char c);
+    static int is_a_valid_nickname(std::string nick);
+    static int is_a_valid_channel_name(std::string channel_name);
+    static int is_a_channel(std::string str);
+    static std::vector<std::string> split_string(std::string str, char delimiter);
+    static void add_channel_client_to_string(Channel & channel, std::string & msg);
     private:
     void get_server_response_form_stdin(char *msg);
     void Set_connexion();
@@ -70,18 +76,20 @@ class Server : public AHost
     void welcome_msg(int fd);
     void command_kick(int fd, Message msg);
     int  is_register(int fd);
+    void split_msg_and_send_it(const int & recipient_fd, std::string  msg);
     void command_priv_msg(int fd, Message msg);
     void command_join(int fd, Message msg);
     void send_message_to_channel(const int & fd, const Message & msg);
-    void split_msg_and_send_it(const int & recipient_fd, std::string  msg);
     void send_message_to_client(const int & fd, const Message & msg);
     void build_prefix_and_send_message(const int & sender_fd, const int & recipient_fd, const Message & receiveid_message);
     void join_channel(int client_fd, std::string channel_name);
     void part_channel(int client_fd, std::string channel_name);
     void command_part(int fd, Message msg);
     void command_names(int fd, Message msg);
+    void set_topic(int fd, std::string channel_name, std::string topic);
+    void display_topic(int fd, std::string channel_name);
+    void command_topic(int fd, Message msg);
     void set_client_buffer(Client & client);
-    std::vector<std::string> split_string(std::string str, char delimiter);
     void join_names_reply(int fd, std::string channel_name);
     void warn_the_channel(std::string channel_name, std::string msg);
     // std::string trim_white(std::string str);

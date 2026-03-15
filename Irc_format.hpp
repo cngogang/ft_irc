@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Irc_format.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cngogang <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/09 13:19:40 by cngogang          #+#    #+#             */
-/*   Updated: 2026/03/09 13:19:55 by cngogang         ###   ########.fr       */
+/*   Updated: 2026/03/14 18:41:41 by ngogang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,7 +97,7 @@
 // ========================================================================== //
 //     TOPIC                                                                  //
 // ========================================================================== //
-
+# define ERR_NOTONCHANNEL(nickname, channel)		":ft_irc 442 " + nickname +  + " " + channel + " :You're not on that channel\r\n"
 # define RPL_NOTOPIC(nickname, channel) ":ft_irc 331 " + nickname + " " + channel + " :No topic is set\r\n"
 
 # define RAW_TOPIC(nickname, username, hostname, channel, topic) \

@@ -6,7 +6,7 @@
 /*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/07 15:32:56 by ngogang           #+#    #+#             */
-/*   Updated: 2026/02/22 15:16:56 by ngogang          ###   ########.fr       */
+/*   Updated: 2026/03/14 15:08:13 by ngogang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@
         ft_memset(this->sent_line, 0, 513);
     }
 
-    Client::Client(const Client & copy)
+    Client::Client(const Client & copy) : AHost(copy)
     {
         //  std::cout << "Copy Constructor client called " << std::endl;
         if (this != &copy)
