@@ -6,7 +6,7 @@
 /*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/14 16:14:57 by ngogang           #+#    #+#             */
-/*   Updated: 2026/03/14 17:16:40 by ngogang          ###   ########.fr       */
+/*   Updated: 2026/03/15 18:44:03 by ngogang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,8 @@ void Server::Init_command_map()
     this->commands["PART"] = &Server::command_part;
     this->commands["NAMES"] = &Server::command_names;
     this->commands["KICK"] = &Server::command_kick;
+    this->commands["INVITE"] = &Server::command_invite;
+    this->commands["TOPIC"] = &Server::command_topic;
 
 }
 
