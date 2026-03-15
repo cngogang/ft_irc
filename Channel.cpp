@@ -6,7 +6,7 @@
 /*   By: ngogang <ngogang@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/19 16:41:02 by cngogang          #+#    #+#             */
-/*   Updated: 2026/03/04 21:35:14 by ngogang          ###   ########.fr       */
+/*   Updated: 2026/03/15 09:49:39 by ngogang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,7 +122,25 @@
         return (*this);
 
     }
-      std::map<int, Client*> &  Channel::Get_members()
+    
+    const Client *Channel::Get_members(int fd)
+    {
+        if (this->members.find(fd) == this->members.end())
+            return (NULL);
+        else
+            return (this->operators[fd]);
+    } 
+
+    std::string Channel::Get_topic()
+    {
+        return (this->topic);
+    }
+    void Channel::Set_topic(std::string new_topic)
+    {
+        this->topic = new_topic;
+    }
+
+    std::map<int, Client*> &  Channel::Get_members()
     {
         return (this->members);
     }
