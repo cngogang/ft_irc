@@ -17,6 +17,9 @@
 #include "Channel.hpp"
 
 
+
+
+
 Server::Server():port(8080)
 {
     Run();
@@ -97,34 +100,6 @@ void Server::Run()
 }
 
 
-
-
-
-// static int is_a_valid_username(std::string user)
-// {
-//     for (std::string::iterator it = user.begin(); it != user.end(); ++it)
-//     {
-//         if (*it >= 97 && *it <= 175)
-//             continue ;
-//         else if (*it >= 65 && *it <= 90)
-//             continue ;
-//         else if (*it == 45)
-//             continue ;
-//         else if (*it == 46)
-//             continue ;
-//         else if (*it == 95)
-//             continue ;
-//          else if (*it == 126)
-//             continue ;
-//         else if (*it >= 48 && *it <= 57)
-//             continue ;
-//         else 
-//             return (0);
-//     }
-//     return (1);
-// }
-
-
 void Server::command_priv_msg(int fd, Message msg)
 {
     std::cout << "HERE cmd" << std::endl;
@@ -136,7 +111,15 @@ void Server::command_priv_msg(int fd, Message msg)
         send_message_to_client(fd, msg);
 }
 
-
+int has_white_space(std::string str)
+{
+    for (std::string::iterator it = str.begin(); it != str.end(); ++it)
+    {
+        if (*it <= static_cast<char>(32) || *it == ':')
+            return (1);
+    }
+    return (0);
+}
 
 
 

@@ -31,19 +31,35 @@ class Channel
     void add_operators(Client & first_member, const int & first_member_fd);
     void remove_members( int & member_fd);
     void add_to_invitation_list(int member_fd);
+    
     int is_private();
+    int is_limited();
+    int is_locked();
+
     int get_size();
     void Set_topic(std::string new_topic);
     std::string Get_topic();
     std::string Get_name();
+    
+    // int Get_limit();
+    std::string Get_key();
+    void Set_limit(int limit);
+    void Set_key(std::string new_key);
+    void Put_on_invite_only();
+    void Put_off_invite_only();
+    void Put_on_topic_privilege();
+    void Put_off_topic_privilege();
+    int  is_topic_restriction();
+    int is_in_the_channel(int fd);
     void Set_name(std::string str_name);
     const Client *Get_operators(int fd);
     const Client *Get_members(int fd);
+    
     private :
     int invit_only_mode;
+    // int has_key;
+    // int has_limit;
     int topic_restriction;
-    int has_key;
-    int has_limit;
     int limit_user;
     std::vector<int> host;
     std::vector<int> invitation_list;

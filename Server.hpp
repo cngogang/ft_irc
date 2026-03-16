@@ -66,7 +66,7 @@ class Server : public AHost
     void Create_epoll_instance_and_bind_server_socket();
     void read_bytes_and_build_message(Client current_client);
     int  receive_bytes(Client  & current_client);
-    int  check_errno_value(void);
+    int  check_errno_value();
     int line_is_CRLF_termininated(const Client & current_client);
     void build_message_object_and_proceed_it(Client & current_client, Message & msg);
     void Init_command_map();
@@ -82,7 +82,7 @@ class Server : public AHost
     void send_message_to_channel(const int & fd, const Message & msg);
     void send_message_to_client(const int & fd, const Message & msg);
     void build_prefix_and_send_message(const int & sender_fd, const int & recipient_fd, const Message & receiveid_message);
-    void join_channel(int client_fd, std::string channel_name);
+    void join_channel(int client_fd, std::string channel_name, std::string key);
     void part_channel(int client_fd, std::string channel_name);
     void command_part(int fd, Message msg);
     void command_names(int fd, Message msg);
@@ -95,6 +95,15 @@ class Server : public AHost
     void set_client_buffer(Client & client);
     void join_names_reply(int fd, std::string channel_name);
     void warn_the_channel(std::string channel_name, std::string msg);
+    void apply_mode(int fd, Message msg, char key);
+    int  check_mod_arg(int fd, Message msg);
+    void command_mode(int fd, Message msg);
+    void command_mode_option_invite_only(int fd, Message msg);
+    void command_mode_option_topic_privilege(int fd, Message msg);
+    void command_mode_option_key(int fd, Message msg);
+    void command_mode_option_operator(int fd, Message msg);
+    void command_mode_option_user_limit(int fd, Message msg);
+    // int check_key_arg(int fd, std::string key, Message msg);
     // std::string trim_white(std::string str);
     void create_a_new_channel(std::map<std::string, Channel> & channel_line, Client & client, std::string channel_name_trim);
     void send_message( const int & recipient_fd, std::string  msg);
@@ -102,10 +111,13 @@ class Server : public AHost
     std::map<std::string, Client*> client_line_by_nick;
     std::map<std::string, Channel> channels_line;
     std::map<std::string, void (Server::*)(int fd, Message msg)> commands;
-    std::map<std::string, void (Server::*)(int fd, Message msg)> register_commands; 
+    std::map<std::string, void (Server::*)(int fd, Message msg)> register_commands;
+    std::map<char , void (Server::*)(int fd, Message msg)> mode_command_options; 
     int port;
     int epoll_fd;
     std::string password;
     
 
 };
+
+int has_white_space(std::string str);

@@ -42,7 +42,7 @@ void Server::warn_the_channel(std::string channel_name, std::string msg)
 }
 
 
-void Server::join_channel(int client_fd, std::string channel_name)
+void Server::join_channel(int client_fd, std::string channel_name, std::string key)
 {
     std::string channel_name_trim = Server::trim_white(channel_name);
     if (!is_a_valid_channel_name(channel_name_trim))
@@ -53,30 +53,52 @@ void Server::join_channel(int client_fd, std::string channel_name)
     if (this->channels_line.find(channel_name_trim) == this->channels_line.end())
        create_a_new_channel(this->channels_line, this->client_line[client_fd], channel_name_trim);
     else
+    {
+        
+        if(this->channels_line[channel_name_trim].is_locked() && key != this->channels_line[channel_name_trim].Get_key())
+            send_message(client_fd, ERR_BADCHANNELKEY(channel_name));
+        else if (this->channels_line[channel_name_trim].is_limited() && this->channels_line[channel_name_trim].is_limited() >= this->channels_line[channel_name_trim].get_size())
+            send_message(client_fd, ERR_CHANNELISFULL(channel_name));
+        else if(this->channels_line[channel_name_trim].add_members(this->client_line[client_fd], client_fd) == -1)
+            send_message(client_fd, ERR_INVITEONLYCHAN(channel_name));
+        else 
         {
-            if(this->channels_line[channel_name_trim].add_members(this->client_line[client_fd], client_fd) == -1)
-                send_message(client_fd, ERR_INVITEONLYCHAN(channel_name));
-            else 
-                {
-                    this->client_line[client_fd].Channel_list.push_back(channel_name_trim);
-                    warn_the_channel(channel_name_trim, RAW_JOIN(this->client_line[client_fd].get_nick(), this->client_line[client_fd].get_username(), this->client_line[client_fd].get_IP_adress(), channel_name));
-                    join_names_reply(client_fd,  channel_name_trim);
-                }
+            this->client_line[client_fd].Channel_list.push_back(channel_name_trim);
+            warn_the_channel(channel_name_trim, RAW_JOIN(this->client_line[client_fd].get_nick(), this->client_line[client_fd].get_username(), this->client_line[client_fd].get_IP_adress(), channel_name));
+            join_names_reply(client_fd,  channel_name_trim);
+        }
 
-        }     
+    }     
 }
 
 
 
 void Server::command_join(int fd, Message msg)
 {
-    std::cout << "command join " << std::endl;
     std::vector<std::string> list_channel = Server::split_string(msg.params[0], ',');
+    std::vector<std::string> keys;
+    std::vector<std::string>::iterator key;
+
+    if (msg.params.size() > 2)
+    {
+        keys = Server::split_string(msg.params[1], ',');
+        key = keys.begin();
+        
+    }        
 
     for (std::vector<std::string>::iterator it = list_channel.begin(); it != list_channel.end(); ++it)
     {
-        std::cout << "command join loop " << *it << std::endl;
-        join_channel(fd, *it);
+        if (!keys.empty())
+        {
+            if (key == keys.end())
+                --key;
+            join_channel(fd, *it, Server::trim_white(*key));
+            ++key;
+        }
+        else
+            join_channel(fd, *it, std::string(""));
+
+
     }   
 }
 
@@ -95,13 +117,11 @@ void Server::command_names(int fd, Message msg)
 {
     std::vector<std::string> list_channel;
     std::string command_response = ":ft_irc 353 " + this->client_line[fd].get_nick() + ":";
-    std::cout << "msg.params.size() == "<< msg.params.size() << std::endl;
     if (!msg.params.size())
     {
         list_channel = this->client_line[fd].Channel_list;
         for (std::map<std::string, Channel>::iterator it = this->channels_line.begin(); it != this->channels_line.end(); ++it)
         {
-            std::cout << "map channel line  first " << (*it).first << " get name > " << (*it).second.Get_name() << std::endl;
             if (!(*it).second.is_private() && std::find(list_channel.begin(), list_channel.end(), (*it).first) == list_channel.end())
                 list_channel.push_back((*it).first);
         }
@@ -110,7 +130,6 @@ void Server::command_names(int fd, Message msg)
         list_channel = Server::split_string(msg.params[0], ',');
     for (std::vector<std::string>::iterator it = list_channel.begin(); it != list_channel.end(); it++)
     {
-        std::cout << "list channel name : " << this->channels_line[Server::trim_white(*it)].Get_name() << std::endl;
 
         if (this->channels_line[Server::trim_white(*it)].is_private()) 
             command_response += " * " + this->channels_line[Server::trim_white(*it)].Get_name() + " :";

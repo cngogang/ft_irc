@@ -32,6 +32,12 @@ void Server::command_nick(int fd, Message msg)
 {
     std::string nick;
 
+    
+    if (is_register(fd))
+    {
+        send_message(fd, ERR_ALREADYREGISTRED);
+        return ;
+    }
     if (msg.params.size() != 1)
     {
         send_message(fd, ERR_NONICKNAMEGIVEN);
@@ -61,6 +67,12 @@ void Server::command_user(int fd, Message msg)
 {
     std::string username;
     
+    
+    if (is_register(fd))
+    {
+        send_message(fd, ERR_ALREADYREGISTRED);
+        return ;
+    }
     if (msg.params.size() != 1)
     {
        send_message(fd, ERR_NEEDMOREPARAMS(msg.command));
@@ -84,7 +96,16 @@ void Server::command_user(int fd, Message msg)
 void Server::command_pass(int fd, Message msg)
 {
     std::string pass;
-        std::cout << "HERE 2" << std::endl;
+    
+
+    
+       
+    if (is_register(fd))
+    {
+        send_message(fd, ERR_ALREADYREGISTRED);
+        return ;
+    }
+
     if (msg.params.size() != 1)
     {
         send_message(fd, ERR_NEEDMOREPARAMS(msg.command));

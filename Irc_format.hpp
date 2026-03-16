@@ -82,9 +82,9 @@
 
 # define ERR_NOSUCHNICK(nickname)		"401 " + nickname + " :No such nick/channel\r\n"
 # define ERR_NOSUCHCHANNEL(channel)		"403 " + channel + " :No such channel\r\n"
-# define ERR_UNKNOWNMODE(arg, channel)	("472 " + std::string(1, arg) + " :is unknown mode char to me for " + channel + "\r\n")
+# define ERR_UNKNOWNMODE(arg, channel)	("472 " + arg + " :is unknown mode char to me for " + channel + "\r\n")
 # define ERR_CHANOPRIVSNEEDED(channel)	"482 " + channel + " :You're not channel operator\r\n"
-
+# define ERR_INVALID_MODE_PARAM(channel, mode_arg) "696 " + channel + " l * " + mode_arg + ":Invalid mode parameter\r\n"
 # define RAW_MODE_ADDOP(sender, username, hostname, channel, target) \
     (":" + sender + "!~" + username + "@" + hostname + " MODE " + channel + " +o " + target + "\r\n")
 

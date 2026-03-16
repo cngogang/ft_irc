@@ -65,7 +65,6 @@ int Server::is_a_valid_channel_name(std::string channel_name)
 
 int Server::is_a_channel(std::string str)
 {
-    std::cout << "is_achennel == " << str << " / str[0] == " << str[0] << std::endl;
     if (str[0] == '&' || str[0] == '#')
         return (1);
     return (0);
