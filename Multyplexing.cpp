@@ -14,8 +14,9 @@
 #include "Client.hpp"
 
 
-int Server::check_errno_value(void)
+int Server::check_errno_value()
 {
+    std::cout << "check erno" << std::endl;
     if (errno == EAGAIN)
     {
         errno = 0;
@@ -76,19 +77,29 @@ void Server::handle_request(int fd)
         
     AHost::ft_memset(current_client->receive_bytes_buffer, 0, 513);
     current_client->byte_read = 1;
-
-    while (current_client->byte_read != -1)
+    std::cout << "THERE" <<std::endl;
+    // while (current_client->byte_read != -1)
+    while (current_client->byte_read > 0)
     { 
         
         bytes_received = receive_bytes(*current_client);
+        std::cout << "THERE read > " << current_client->byte_read << " errno > " << errno <<std::endl;
         if (bytes_received > 512)
             return ;
         if (line_is_CRLF_termininated(*current_client))
             build_message_object_and_proceed_it(*current_client, msg);
         if (current_client->byte_read == -1 && !check_errno_value())
             break ;
-           
+        if (!current_client->byte_read)
+        {
+            this->client_line_by_nick.erase(this->client_line[fd].get_nick());
+            this->client_line.erase(fd);
+            
+            // errno = 0;
+            break ;
+        }
     }
+    std::cout << "OVERTHERE" <<std::endl;
 }
 
 
@@ -113,12 +124,14 @@ void Server::Listen_loop()
     while(1)
     {
         fd_ready = epoll_wait(this->epoll_fd, client_event, 3000, -1);
+        std::cout << "FD_READY == " << fd_ready << std::endl;
         if (fd_ready == -1)
             throw EpollWaitError();
         // std::cout << "Befor loop stdin check " << fcntl(0, F_GETFL, 0) << std::endl;
         for(int i = 0; i < fd_ready; ++i)
         {
             // std::cout << "In listen loop stdin check " << fcntl(0, F_GETFL, 0) << std::endl;
+            std::cout << "client_event[i].data.fd ==  " << client_event[i].data.fd << std::endl;
             if (client_event[i].data.fd == -1)
                 break ;
             else if (client_event[i].data.fd == this->fd_socket)

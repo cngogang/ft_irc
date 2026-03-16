@@ -171,6 +171,8 @@ void Server::build_message_object_and_proceed_it(Client & current_client, Messag
         else
             send_message(current_client.get_fd_socket(), ERR_NOTREGISTERED);
     }
+    else if (msg.command == "CAP")
+        return ;
     else
         send_message(current_client.get_fd_socket(),ERR_UNKNOWNCOMMAND(msg.command));
 }

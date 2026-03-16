@@ -14,7 +14,7 @@
 #include "Channel.hpp"
 
 
-    Channel::Channel():invit_only_mode(0)
+    Channel::Channel():invit_only_mode(0), topic_restriction(0), limit_user(0)
     {
 
     }
@@ -23,11 +23,10 @@
 
     }
 
-    Channel::Channel( Client & first_member, const int & first_member_fd, const std::string channel_name): invit_only_mode(0), name(channel_name)
+    Channel::Channel( Client & first_member, const int & first_member_fd, const std::string channel_name): invit_only_mode(0), topic_restriction(0), limit_user(0), name(channel_name)
     {
       this->operators[first_member_fd] = &first_member;
       this->host.push_back(first_member_fd);
-
     }
 
 
@@ -122,6 +121,10 @@
         this->operators = rightOperand.operators;
         this->members = rightOperand.members;
         this->invitation_list = rightOperand.invitation_list;
+        this->limit_user = rightOperand.limit_user;
+        this->key = rightOperand.key;
+
+
         return (*this);
 
     }
@@ -171,4 +174,65 @@
     int Channel::is_private()
     {
         return (this->invit_only_mode);
+    }
+
+    int Channel::is_in_the_channel(int fd)
+    {
+        for(std::vector<int>::iterator it = this->host.begin(); it != this->host.end(); ++it)
+        {
+            if (*it == fd)
+                return (1);
+        }
+        return (0);
+    }
+    int  Channel::is_topic_restriction()
+    {
+        return (this->topic_restriction);
+    }
+
+    int Channel::is_limited()
+    {
+        return (this->limit_user);
+    }
+    int Channel::is_locked()
+    {
+        return (!this->key.empty());
+    }
+    // int Channel::Get_limit()
+    // {
+    //     return (this->limit_user)
+    // }
+
+    std::string Channel::Get_key()
+    {
+        return (this->key);
+    }
+    void Channel::Set_limit(int limit)
+    {
+        this->limit_user = limit;
+    }
+    void Channel::Set_key(std::string new_key)
+    {
+        this->key = new_key;
+    }
+    void Channel::Put_on_invite_only()
+    {
+        if(!this->invit_only_mode)
+            this->invit_only_mode = 1;
+    }
+    void Channel::Put_off_invite_only()
+    {
+        if(this->invit_only_mode)
+            this->invit_only_mode = 0;
+    }
+
+    void Channel::Put_on_topic_privilege()
+    {
+        if(!this->topic_restriction)
+            this->topic_restriction = 1;
+    }
+    void Channel::Put_off_topic_privilege()
+    {
+        if(this->topic_restriction)
+            this->topic_restriction = 0;
     }
