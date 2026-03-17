@@ -18,7 +18,15 @@
 
 
 
+int Server::is_running = 0;
 
+
+void Signal_handling(int sig)
+{
+    if (sig == SIGINT)
+        Server::is_running = 0;
+    
+}
 
 Server::Server():port(8080)
 {
@@ -90,6 +98,8 @@ void Server::Run()
     {
         Init_connection();
         Init_command_map();
+        Server::is_running = 1;
+        signal(SIGINT, Signal_handling);
         Listen_and_handle_request();
 
     }
@@ -98,7 +108,6 @@ void Server::Run()
         std::cerr << e.what() << errno << std::endl;
     }
 }
-
 
 void Server::command_priv_msg(int fd, Message msg)
 {

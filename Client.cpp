@@ -17,7 +17,7 @@
         
         ft_memset(this->receive_bytes_buffer, 0,513);
         ft_memset(this->sent_bytes_buffer, 0, 513);
-        ft_memset(this->receive_line, 0, 513);
+        // ft_memset(this->receive_line, 0, 513);
         ft_memset(this->sent_line, 0, 513);
         // std::cout << "Constructor client called " << std::endl;
     }
@@ -35,7 +35,7 @@
         // std::cout << "Other Constructor client called " << std::endl;
         ft_memset(this->receive_bytes_buffer, 0,513);
         ft_memset(this->sent_bytes_buffer, 0, 513);
-        ft_memset(this->receive_line, 0, 513);
+        // ft_memset(this->receive_line, 0, 513);
         ft_memset(this->sent_line, 0, 513);
     }
 
@@ -92,6 +92,15 @@
     std::string Client::get_realname()
     {
         return (this->realname);
+    }
+    void Client::set_servername(std::string servername)
+    {
+        this->servername = servername;
+    }
+
+    std::string Client::get_servername()
+    {
+        return (this->servername);
     }
 
     void Client::set_IP_adress(std::string IP)

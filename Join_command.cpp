@@ -22,6 +22,7 @@ void Server::create_a_new_channel(std::map<std::string, Channel> & channel_line,
         channel_line[channel_name_trim].add_operators(client , client.get_fd_socket());
         channel_line[channel_name_trim].Set_name(channel_name_trim);
         client.Channel_list.push_back(channel_name_trim);
+        warn_the_channel(channel_name_trim, RAW_JOIN(client.get_nick(), client.get_username(), client.get_IP_adress(), channel_name_trim));
 }
 
 
@@ -41,7 +42,23 @@ void Server::warn_the_channel(std::string channel_name, std::string msg)
 
 }
 
+void Server::warn_the_channel(std::string channel_name, std::string msg, int fd)
+{
+    std::map<int, Client *> operators_list = this->channels_line[channel_name].Get_operators();
+    std::map<int, Client *> members_list = this->channels_line[channel_name].Get_members();
 
+    for (std::map<int, Client *>::iterator it = operators_list.begin(); it != operators_list.end(); ++it)
+    {
+        if (fd != (*it).first)
+            send_message((*it).first, msg);
+    }
+    for (std::map<int, Client *>::iterator it = members_list.begin(); it != members_list.end(); ++it)
+    {
+        if (fd != (*it).first)
+            send_message((*it).first, msg);
+    }
+
+}
 void Server::join_channel(int client_fd, std::string channel_name, std::string key)
 {
     std::string channel_name_trim = Server::trim_white(channel_name);

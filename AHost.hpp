@@ -35,7 +35,7 @@ class AHost
     AHost(int fd);
     virtual ~AHost();
     AHost(const AHost & copy);
-    AHost & operator=(const  AHost  & rightOperand);
+    AHost & operator=(const AHost & rightOperand);
     void copy_host_connection_param(const AHost & RightOperand);
     //  void copy_host_connection_info(const struct AHost & RightOperand);
     static  void addrinfo_memset(struct addrinfo *ai);

@@ -123,7 +123,7 @@
         this->invitation_list = rightOperand.invitation_list;
         this->limit_user = rightOperand.limit_user;
         this->key = rightOperand.key;
-
+        this->topic_restriction = rightOperand.topic_restriction;
 
         return (*this);
 

@@ -66,20 +66,27 @@ void Server::command_nick(int fd, Message msg)
 void Server::command_user(int fd, Message msg)
 {
     std::string username;
-    
+    std::string IP;
+    std::string servername;
+    std::string realname;
     
     if (is_register(fd))
     {
         send_message(fd, ERR_ALREADYREGISTRED);
         return ;
     }
-    if (msg.params.size() != 1)
+    if (msg.params.size() != 3)
     {
        send_message(fd, ERR_NEEDMOREPARAMS(msg.command));
         return ;
     }
     username = Server::trim_white(msg.params[0]);
+    IP = Server::trim_white(msg.params[1]);
+    servername = Server::trim_white(msg.params[2]);
+    realname = Server::trim_white(msg.trailing_params);
     this->client_line[fd].set_username(username);
+
+
     if (is_register(fd))
         welcome_msg(fd);
 }

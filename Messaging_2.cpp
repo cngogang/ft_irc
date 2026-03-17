@@ -14,51 +14,56 @@
 #include "Client.hpp"
 // #include "Server_utils.cpp"
 
-static int copy_bytes(char *src, char *dst)
-{
-    int j = 0;
-    while (dst[j])
-        ++j;
-    int i = 0;
-    while (src[i] && (i + j) < 512)
-    {
-        dst[i + j] = src[i];
-        ++i;
-    }
-    if (i <= 512)
-    {
-        dst[i + j] = '\0';
-        return (i);
-    }    
-    else
-        return (i);
-}
-int Server::line_is_CRLF_termininated(const Client & current_client)
-{
-    int i;
-    for (i = 0; current_client.receive_line[i]; ++i)
-    {   }
+// static int copy_bytes(char *src, char *dst)
+// {
+//     int j = 0;
+//     while (dst[j])
+//         ++j;
+//     int i = 0;
+//     while (src[i] && (i + j) < 512 )
+//     {
+//         dst[i + j] = src[i];
+//         ++i;
+//     }
+
+//     if (i <= 512)
+//     {
+//         dst[i + j] = '\0';
+//         return (i);
+//     }    
+//     else
+//         return (i);
+// // }
+// int Server::line_is_CRLF_termininated(const Client & current_client)
+// {
+//     int i;
+//     for (i = 0; current_client.receive_line[i]; ++i)
+//     {   }
     
-    if (current_client.receive_line[i - 1] == '\n')
-        return (1);
-    return (0);    
-}
+//     if (current_client.receive_line[i - 1] == '\n')
+//         return (1);
+//     return (0);    
+// }
 
 int Server::receive_bytes(Client  & current_client)
 {
-    int returned_bytes;
+    
+    std::string bytes_received;
 
-
-    returned_bytes = copy_bytes(current_client.receive_bytes_buffer, current_client.receive_line);   
-    AHost::ft_memset(current_client.receive_bytes_buffer, 0, 513);
-    if (returned_bytes > 512)
-    {
-        AHost::ft_memset(current_client.receive_bytes_buffer, 0, 513);
-        AHost::ft_memset(current_client.receive_line, 0, 513);
-        return (-1);
-    }
-    // AHost::ft_memset(current_client.receive_bytes_buffer, 0, strlen(current_client.receive_bytes_buffer));
+    // returned_bytes = copy_bytes(current_client.receive_bytes_buffer, current_client.receive_line);   
     current_client.byte_read = recv(current_client.AHost::get_fd_socket(), current_client.receive_bytes_buffer, 512, 0);
+    // if (current_client.byte_read == - 1)
+    //     throw AHost::recvError();
+    bytes_received = std::string(current_client.receive_bytes_buffer);
+    current_client.receive_line += bytes_received;
+    AHost::ft_memset(current_client.receive_bytes_buffer, 0, 513);
+    // if (returned_bytes > 512)
+    // {
+    //     AHost::ft_memset(current_client.receive_bytes_buffer, 0, 513);
+    //     AHost::ft_memset(current_client.receive_line, 0, 513);
+    //     return (-1);
+    // }
+    // AHost::ft_memset(current_client.receive_bytes_buffer, 0, strlen(current_client.receive_bytes_buffer));
     // returned_bytes = copy_bytes(current_client.receive_bytes_buffer, current_client.receive_line);
 
     return (0);
@@ -68,7 +73,7 @@ int Server::receive_bytes(Client  & current_client)
 static void extract_command_name( std::string & raw_message, Message & msg)
 {
     std::string::iterator end_command_name;
-    std::cout << "ECN" << std::endl; 
+    //  std::cout << "ECN : " << raw_message << "end ECN" << std::endl;
     end_command_name = std::find(raw_message.begin(), raw_message.end(), ' ');
     msg.command.assign(raw_message.begin(), end_command_name);
     msg.command = Server::trim_white(msg.command);
@@ -85,7 +90,7 @@ static void extract_command_arg( std::string & raw_message, Message & msg)
     std::string::iterator end_arg;
     std::string param_buff;
 
-    std::cout << "ECA" << std::endl;
+    // std::cout << "ECA : " << raw_message << "end ECA" << std::endl;
     start_arg = std::find(raw_message.begin(), raw_message.end(), ' ');
     if (start_arg == raw_message.end() || start_arg == raw_message.begin())
         return ;
@@ -107,7 +112,7 @@ static void extract_trailing_param( std::string & raw_message, Message & msg)
 {
     std::string::iterator colon_position;
     std::string buff;
-    std::cout << "ETP" << std::endl;
+    //  std::cout << "ETP : " << raw_message << "end ETP" << std::endl;
     colon_position = std::find(raw_message.begin(), raw_message.end(), ':');
     
     if (colon_position != raw_message.end())
@@ -144,24 +149,8 @@ static void extract_trailing_param( std::string & raw_message, Message & msg)
     
 // }
 
-void Server::build_message_object_and_proceed_it(Client & current_client, Message & msg)
+void Server::proceed_message(Client & current_client, Message & msg)
 {
-    std::string::iterator end_c_name;
-    std::string::iterator colon_position;
-    std::string::iterator start_arg;
-    std::string::iterator end_arg;
-    std::string raw_message(current_client.receive_line);
-    std::string param_buff;
-
-    ft_memset(current_client.receive_line, 0, 513);
-    extract_command_name(raw_message, msg); 
-    if (msg.command.empty())
-         return ;
-    extract_command_arg(raw_message, msg);
-    extract_trailing_param(raw_message, msg);
-
-    std::cout << "HERE" << std::endl;
-    std::cout << "HERE : " << msg.command << std::endl;
     if ((this->register_commands).find(msg.command) != this->register_commands.end())
         (this->*(this->register_commands[msg.command]))(current_client.get_fd_socket(), msg);
     else if ((this->commands).find(msg.command) != this->commands.end())
@@ -175,4 +164,55 @@ void Server::build_message_object_and_proceed_it(Client & current_client, Messag
         return ;
     else
         send_message(current_client.get_fd_socket(),ERR_UNKNOWNCOMMAND(msg.command));
+}
+
+void extract_line_from_receive_line(std::string &receive_line, std::string & line)
+{
+    std::string::iterator nl_pos;
+    std::string buffer;
+
+    std::cout << "BEFORE r_l = " << receive_line << std::endl;
+    std::cout << "bEFORE l = " << line << std::endl;
+    nl_pos = std::find(receive_line.begin(),receive_line.end(), '\n');
+    if (nl_pos == receive_line.begin())
+        return ;
+    buffer.assign(nl_pos + 1, receive_line.end());
+    line.assign(receive_line.begin(), nl_pos + 1);
+    receive_line = buffer;
+    // for (std::string::iterator it = receive_line.begin(); it <= nl_pos ; ++it)
+    // {
+    //     receive_line.erase(it);
+    // }
+    std::cout << "AFTER r_l = " << receive_line << std::endl;
+    std::cout << "AFTER l = " << line << std::endl;
+}
+
+void Server::build_message_object_and_proceed_it(Client & current_client, Message & msg)
+{
+    std::string::iterator end_c_name;
+    std::string::iterator colon_position;
+    std::string::iterator start_arg;
+    std::string::iterator end_arg;
+    std::string line;
+    std::string param_buff;
+
+
+    // ft_memset(current_client.receive_line, 0, 513);
+    while (current_client.receive_line.find('\n') != std::string::npos)
+    {
+        extract_line_from_receive_line(current_client.receive_line, line);
+        extract_command_name(line, msg); 
+        if (msg.command.empty())
+            return ;
+        extract_command_arg(line, msg);
+        extract_trailing_param(line, msg);
+        std::cout << "COMMAND NAME : " << msg.command << std::endl;
+        for (size_t i = 0; i < msg.params.size(); ++i)
+            std::cout << "COMMAND PARAM : " << msg.params[i] << std::endl;
+        std::cout << "COMMAND TRAILING : " << msg.trailing_params << std::endl;
+        proceed_message(current_client, msg);
+        msg = Message();
+    }
+    
+    
 }
