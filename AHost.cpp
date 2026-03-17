@@ -68,6 +68,7 @@ void AHost::addrinfo_memset(struct addrinfo *ai)
     ai->ai_canonname = NULL;
     ai->ai_next = NULL;
 }
+
 const char *AHost::BindError::what() const throw()
 {
         return ("Bind issue number :");

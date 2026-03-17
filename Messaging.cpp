@@ -101,16 +101,23 @@ void Server::send_message_to_channel(const int & fd, const Message & msg)
 
     if (this->channels_line.find(channel_name) == this->channels_line.end())
         return ;
+    if (!this->channels_line[channel_name].is_in_the_channel(fd))
+    {
+        send_message(fd, ERR_NTONCHANNEL(this->client_line[fd].get_nick(), channel_name));
+        return ;
+    }
     target_channel = this->channels_line[channel_name];
     target_channel_members = target_channel.Get_members();
     target_channel_operators = target_channel.Get_operators();
     for(it = target_channel_operators.begin();it != target_channel_operators.end() ; ++it)
     {
-        send_message((*it).first, RAW_BROADCAST(this->client_line[fd].get_nick(),this->client_line[fd].get_username(), this->client_line[fd].get_IP_adress(), channel_name, msg.trailing_params));
+        // if (fd != (*it).first)
+            send_message((*it).first, RAW_BROADCAST(this->client_line[fd].get_nick(),this->client_line[fd].get_username(), this->client_line[fd].get_IP_adress(), channel_name, msg.trailing_params));
     } 
     for(it = target_channel_members.begin();it != target_channel_members.end() ; ++it)
     {
-        send_message((*it).first, RAW_BROADCAST(this->client_line[fd].get_nick(),this->client_line[fd].get_username(), this->client_line[fd].get_IP_adress(), channel_name, msg.trailing_params));
+        // if (fd != (*it).first)
+            send_message((*it).first, RAW_BROADCAST(this->client_line[fd].get_nick(),this->client_line[fd].get_username(), this->client_line[fd].get_IP_adress(), channel_name, msg.trailing_params));
     } 
 } 
 

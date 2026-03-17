@@ -32,10 +32,12 @@ class Client : public AHost
     std::string get_username();
     void set_realname(std::string realname);
     std::string get_realname();
+    void set_servername(std::string servername);
+    std::string get_servername();
     void set_IP_adress(std::string IP);
     std::string get_IP_adress();
     char receive_bytes_buffer[513];
-    char receive_line[513];
+    std::string receive_line;
     char sent_bytes_buffer[513];
     char sent_line[513];
     int fd_to_send;
@@ -52,5 +54,6 @@ class Client : public AHost
     std::string nickname;
     std::string username;
     std::string realname;
+    std::string servername;
     std::string pass;
 };

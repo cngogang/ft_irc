@@ -13,7 +13,7 @@
 #pragma once
 #include "AHost.hpp"
 #include <algorithm>
-
+#include <signal.h>
 
 class Client;
 class Channel;
@@ -44,6 +44,8 @@ class Server : public AHost
     static int is_a_channel(std::string str);
     static std::vector<std::string> split_string(std::string str, char delimiter);
     static void add_channel_client_to_string(Channel & channel, std::string & msg);
+    static int is_running;
+    
     private:
     void get_server_response_form_stdin(char *msg);
     void Set_connexion();
@@ -60,6 +62,7 @@ class Server : public AHost
     void Create_epoll_instance();
     void Add_listening_socket_to_epoll();
     void Listen_loop();
+    void proceed_message(Client & current_client, Message & msg);
     void create_a_new_client_and_add_it_to_interest_list();
     void add_fd_to_epoll_interest_list(int fd_epoll, int fd_to_add, int flag);
     void handle_request(int fd);
@@ -70,7 +73,7 @@ class Server : public AHost
     int line_is_CRLF_termininated(const Client & current_client);
     void build_message_object_and_proceed_it(Client & current_client, Message & msg);
     void Init_command_map();
-    void command_pass(int fd, Message msg);
+    void command_pass(int fd, Message msg);;
     void command_nick(int fd, Message msg);
     void command_user(int fd, Message msg);
     void welcome_msg(int fd);
@@ -95,6 +98,7 @@ class Server : public AHost
     void set_client_buffer(Client & client);
     void join_names_reply(int fd, std::string channel_name);
     void warn_the_channel(std::string channel_name, std::string msg);
+    void warn_the_channel(std::string channel_name, std::string msg, int fd);
     void apply_mode(int fd, Message msg, char key);
     int  check_mod_arg(int fd, Message msg);
     void command_mode(int fd, Message msg);
@@ -117,7 +121,8 @@ class Server : public AHost
     int epoll_fd;
     std::string password;
     
-
+    
 };
 
+void Signal_handling(int sig);
 int has_white_space(std::string str);

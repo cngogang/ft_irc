@@ -25,6 +25,7 @@ void Server::Init_command_map()
     this->commands["KICK"] = &Server::command_kick;
     this->commands["INVITE"] = &Server::command_invite;
     this->commands["TOPIC"] = &Server::command_topic;
+    this->commands["MODE"] = &Server::command_mode;
     this->mode_command_options['i'] = &Server::command_mode_option_invite_only;
     this->mode_command_options['t'] = &Server::command_mode_option_topic_privilege;
     this->mode_command_options['k'] = &Server::command_mode_option_key;

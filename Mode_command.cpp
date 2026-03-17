@@ -39,11 +39,13 @@ static int mode_atoi(std::string str)
 
 static int is_valid_mode_key(std::string key)
 {
+    std::cout << "key == " << key << "and size == " << key.size() << std::endl;
+    
     if (*(key.begin()) != '+' && *(key.begin()) != '-')
         return (0);
     else if (key.size() != 2)
         return (0);
-    else if (is_known_mode(*(key.begin() + 1)))
+    else if (!is_known_mode(*(key.begin() + 1)))
         return (0);
     return (1);
 
@@ -189,11 +191,12 @@ int Server::check_mod_arg(int fd, Message msg)
     }
     else if (!this->channels_line[channel_name].Get_operators(fd))
     {
+        std::cout << "not an operator" << std::endl;
         send_message(fd, ERR_CHANOPRIVSNEEDED(channel_name));
         return (0);   
     }
-    else if (is_valid_mode_key(key))
-    {
+    else if (!is_valid_mode_key(key))
+    { 
         send_message(fd, ERR_UNKNOWNMODE(key, channel_name));	
         return (0);
     }

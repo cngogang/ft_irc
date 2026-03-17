@@ -23,7 +23,7 @@ void Server::set_topic(int fd, std::string channel_name, std::string topic)
         send_message(fd, ERR_NOSUCHCHANNEL(channel_name));	
         return  ;
     }
-    else if (this->channels_line[channel_name].is_in_the_channel(fd))
+    else if (!this->channels_line[channel_name].is_in_the_channel(fd))
     {
         send_message(fd, ERR_NOTONCHANNEL(this->client_line[fd].get_nick(), channel_name));
         return ;

@@ -45,7 +45,7 @@ void Server::set_client_buffer(Client & client)
 {
     ft_memset(client.receive_bytes_buffer, 0, sizeof(client.receive_bytes_buffer));
     ft_memset(client.sent_bytes_buffer, 0, sizeof(client.sent_bytes_buffer));
-    ft_memset(client.receive_line, 0, sizeof(client.receive_line));
+    // ft_memset(client.receive_line, 0, sizeof(client.receive_line));
     ft_memset(client.sent_line, 0, sizeof(client.sent_line));
 
 }
@@ -84,10 +84,10 @@ void Server::handle_request(int fd)
         
         bytes_received = receive_bytes(*current_client);
         std::cout << "THERE read > " << current_client->byte_read << " errno > " << errno <<std::endl;
-        if (bytes_received > 512)
-            return ;
-        if (line_is_CRLF_termininated(*current_client))
-            build_message_object_and_proceed_it(*current_client, msg);
+        // if (bytes_received > 512)
+        //     return ;
+        // if (line_is_CRLF_termininated(*current_client))
+        build_message_object_and_proceed_it(*current_client, msg);
         if (current_client->byte_read == -1 && !check_errno_value())
             break ;
         if (!current_client->byte_read)
@@ -121,7 +121,7 @@ void Server::Listen_loop()
 
     if (listen(this->fd_socket, 10) != 0)
         throw ListenError();
-    while(1)
+    while(Server::is_running)
     {
         fd_ready = epoll_wait(this->epoll_fd, client_event, 3000, -1);
         std::cout << "FD_READY == " << fd_ready << std::endl;
