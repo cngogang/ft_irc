@@ -76,6 +76,9 @@
 # define RPL_ENDOFNAMES(target, channel) \
 	":ft_irc 366 " + target + " " + channel + " :End of /NAMES list.\r\n"
 
+	# define RAW_PART(nickname, username, hostname, channel, reason) \
+	":" + nickname + "!~" + username + "@" + hostname + " PART " + channel + " :" + reason + "\r\n"
+	
 // ========================================================================== //
 //     MODE                                                                   //
 // ========================================================================== //
@@ -85,6 +88,7 @@
 # define ERR_UNKNOWNMODE(arg, channel)	("472 " + arg + " :is unknown mode char to me for " + channel + "\r\n")
 # define ERR_CHANOPRIVSNEEDED(channel)	"482 " + channel + " :You're not channel operator\r\n"
 # define ERR_INVALID_MODE_PARAM(channel, mode_arg) "696 " + channel + " l * " + mode_arg + ":Invalid mode parameter\r\n"
+
 # define RAW_MODE_ADDOP(sender, username, hostname, channel, target) \
     (":" + sender + "!~" + username + "@" + hostname + " MODE " + channel + " +o " + target + "\r\n")
 
@@ -128,5 +132,5 @@
 	"442 " + nickname + " " + channel + " :You're not on that channel\r\n" 
 
 # define ERR_USERNOTINCHANNEL(kicker, target, channel) \
-	":ft_irc 441 " + kicker + " " + target + " " + channel + " :They aren't on that channel\r\n"    
+	"441 " + kicker + " " + target + " " + channel + " :They aren't on that channel\r\n"    
 	

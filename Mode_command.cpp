@@ -39,8 +39,6 @@ static int mode_atoi(std::string str)
 
 static int is_valid_mode_key(std::string key)
 {
-    std::cout << "key == " << key << "and size == " << key.size() << std::endl;
-    
     if (*(key.begin()) != '+' && *(key.begin()) != '-')
         return (0);
     else if (key.size() != 2)
@@ -63,7 +61,7 @@ void Server::command_mode_option_invite_only(int fd, Message msg)
         this->channels_line[channel_name].Put_off_invite_only();
     else
         this->channels_line[channel_name].Put_on_invite_only();
-    send_message(fd, RAW_MODE(nickname, username, IP, channel_name, key, msg.params[2]));    
+    send_message(fd, RAW_MODE(nickname, username, IP, channel_name, key, std::string("")));    
 }
 
 void Server::command_mode_option_topic_privilege(int fd, Message msg)
@@ -78,14 +76,14 @@ void Server::command_mode_option_topic_privilege(int fd, Message msg)
         this->channels_line[channel_name].Put_off_topic_privilege();
     else
         this->channels_line[channel_name].Put_on_topic_privilege();
-    send_message(fd, RAW_MODE(nickname, username, IP, channel_name, key, msg.params[2]));
+    send_message(fd, RAW_MODE(nickname, username, IP, channel_name, key, std::string("")));
 }
 
 void Server::command_mode_option_key(int fd, Message msg)
 {
     std::string channel_name = Server::trim_white(msg.params[0]); 
-    std::string key = Server::trim_white(msg.params[1]);
-    std::string new_pass = Server::trim_white(msg.params[2]);
+    std::string key =  Server::trim_white(msg.params[1]);
+    std::string new_pass = msg.params.size() > 2 ? Server::trim_white(msg.params[2]) : "";
     std::string nickname = this->client_line[fd].get_nick();
     std::string username = this->client_line[fd].get_username();
     std::string IP = this->client_line[fd].get_IP_adress();
@@ -93,14 +91,20 @@ void Server::command_mode_option_key(int fd, Message msg)
     if (key[0] == '-')
     {
         this->channels_line[channel_name].Set_key(std::string(""));
-        send_message(fd, RAW_MODE(nickname, username, IP, channel_name, key, new_pass));
+         Broadcast_to_the_channel(channel_name, RAW_MODE(this->client_line[fd].get_nick(), 
+        this->client_line[fd].get_username(), this->client_line[fd].get_IP_adress(), channel_name, key, new_pass));
         return ;
     }
     else if (new_pass.empty() || has_white_space(new_pass))
+    {
+        send_message(fd, std::string("461 MODE :Not enough parameters"));
         return ;
+    }
     this->channels_line[channel_name].Set_key(new_pass);
-
+    Broadcast_to_the_channel(channel_name, RAW_MODE(this->client_line[fd].get_nick(), 
+    this->client_line[fd].get_username(), this->client_line[fd].get_IP_adress(), channel_name, key, new_pass));
 }
+
 void Server::command_mode_option_operator(int fd, Message msg)
 {
     std::string member_nick = trim_white(msg.params[2]); 
@@ -131,25 +135,27 @@ void Server::command_mode_option_operator(int fd, Message msg)
     {
         this->channels_line[channel_name].remove_members(user_id);
         this->channels_line[channel_name].add_members(*(this->client_line_by_nick[member_nick]), user_id);
-        warn_the_channel(channel_name, RAW_MODE_REMOP(nickname, username, IP,  channel_name, member_nick));
+        Broadcast_to_the_channel(channel_name, RAW_MODE_REMOP(nickname, username, IP,  channel_name, member_nick));
         return ;
     }
     
     this->channels_line[channel_name].remove_members(user_id);
     this->channels_line[channel_name].add_operators(*(this->client_line_by_nick[member_nick]), user_id);
-    warn_the_channel(channel_name, RAW_MODE_ADDOP(nickname, username, IP,  channel_name, member_nick));
+    Broadcast_to_the_channel(channel_name, RAW_MODE_ADDOP(nickname, username, IP,  channel_name, member_nick));
 }
 
 void Server::command_mode_option_user_limit(int fd, Message msg)
 {
     std::string channel_name = Server::trim_white(msg.params[0]); 
     std::string key = Server::trim_white(msg.params[1]);
-    std::string limit = Server::trim_white(msg.params[2]);
+    std::string limit = (msg.params.size() > 2) ? Server::trim_white(msg.params[2]) : "";
     int limit_int = mode_atoi(limit);
 
     if (key[0] == '-')
     {
-        this->channels_line[channel_name].Set_limit(0);
+         this->channels_line[channel_name].Set_limit(0);
+         Broadcast_to_the_channel(channel_name, RAW_MODE(this->client_line[fd].get_nick(), 
+          this->client_line[fd].get_username(), this->client_line[fd].get_IP_adress(), channel_name, key, std::string("")));
         return ;
     }
     if (limit.empty())
@@ -163,7 +169,8 @@ void Server::command_mode_option_user_limit(int fd, Message msg)
         return ;
     }
     this->channels_line[channel_name].Set_limit(limit_int);
-    
+    Broadcast_to_the_channel(channel_name, RAW_MODE(this->client_line[fd].get_nick(), this->client_line[fd].get_username(), this->client_line[fd].get_IP_adress(), channel_name, key, limit));
+
 
 }
 
@@ -173,17 +180,11 @@ void Server::apply_mode(int fd, Message msg, char key)
         (this->*(this->mode_command_options[key]))(fd, msg);
 }
 
-// int Server::check_key_arg(int fd, std::string key, Message msg)
-// {
-
-// }
-
 int Server::check_mod_arg(int fd, Message msg)
 {
     std::string channel_name = Server::trim_white(msg.params[0]); 
-    std::string key = Server::trim_white(msg.params[1]);
-    
-    
+    std::string key  =  (msg.params.size() > 1) ? Server::trim_white(msg.params[1]) : std::string("");
+
     if (this->channels_line.find(channel_name) == this->channels_line.end())
     {
         send_message(fd, ERR_NOSUCHCHANNEL(channel_name));	
@@ -191,12 +192,12 @@ int Server::check_mod_arg(int fd, Message msg)
     }
     else if (!this->channels_line[channel_name].Get_operators(fd))
     {
-        std::cout << "not an operator" << std::endl;
         send_message(fd, ERR_CHANOPRIVSNEEDED(channel_name));
         return (0);   
     }
-    else if (!is_valid_mode_key(key))
+    else if (key.empty() || !is_valid_mode_key(key))
     { 
+        std::cout << "key == " << key << std::endl;
         send_message(fd, ERR_UNKNOWNMODE(key, channel_name));	
         return (0);
     }
@@ -205,6 +206,10 @@ int Server::check_mod_arg(int fd, Message msg)
 
 void Server::command_mode(int fd, Message msg)
 {
-    if (check_mod_arg(fd, msg))
+    if (!check_mod_arg(fd, msg))
+        return ;
+    else if (msg.params.size() > 1)
         apply_mode(fd, msg, msg.params[1][1]);
+    else
+        return ;
 }

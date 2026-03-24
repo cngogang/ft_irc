@@ -36,8 +36,10 @@ class Client : public AHost
     std::string get_servername();
     void set_IP_adress(std::string IP);
     std::string get_IP_adress();
-    char receive_bytes_buffer[513];
-    std::string receive_line;
+    void quit();
+    int is_quiting();
+    char receive_bytes_static_buffer[513];
+    std::string receive_bytes_dynamic_buffer;
     char sent_bytes_buffer[513];
     char sent_line[513];
     int fd_to_send;
@@ -47,6 +49,7 @@ class Client : public AHost
     int hasNick;
     int hasUser;
     int registered;
+    int want_quit;
     std::vector<std::string> Channel_list;
     // std::map<std::string, Channel>;
     private:

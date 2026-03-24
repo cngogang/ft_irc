@@ -12,36 +12,29 @@
 
 #include "Client.hpp"
 
-    Client::Client():AHost(-1), registered(0)
+    Client::Client():AHost(-1), registered(0), want_quit(0)
     {
         
-        ft_memset(this->receive_bytes_buffer, 0,513);
+        ft_memset(this->receive_bytes_static_buffer, 0,513);
         ft_memset(this->sent_bytes_buffer, 0, 513);
-        // ft_memset(this->receive_line, 0, 513);
         ft_memset(this->sent_line, 0, 513);
-        // std::cout << "Constructor client called " << std::endl;
     }
 
     Client::~Client()
     {
-        // std::cout << "Destructor client called with fd == "<< this->fd_socket << std::endl;
         if (this->fd_socket != -1)
             close(this->fd_socket);
-
     }
 
-    Client::Client(int fd) : AHost(fd), registered(0)
+    Client::Client(int fd) : AHost(fd), registered(0), want_quit(0)
     {
-        // std::cout << "Other Constructor client called " << std::endl;
-        ft_memset(this->receive_bytes_buffer, 0,513);
+        ft_memset(this->receive_bytes_static_buffer, 0,513);
         ft_memset(this->sent_bytes_buffer, 0, 513);
-        // ft_memset(this->receive_line, 0, 513);
         ft_memset(this->sent_line, 0, 513);
     }
 
     Client::Client(const Client & copy) : AHost(copy)
     {
-        //  std::cout << "Copy Constructor client called " << std::endl;
         if (this != &copy)
         {
             *this = copy;
@@ -51,8 +44,8 @@
     {
         this->copy_host_connection_param(rightOperand);
         this->set_fd_socket(rightOperand.get_fd_socket());
+        this->want_quit = rightOperand.want_quit;   
         return(*this);
-        // this->fd_socket = rightOperand.fd_socket;
     }
     
     void Client::set_pass(std::string pass)
@@ -64,7 +57,14 @@
     {
         return (this->pass);
     }
-
+    void Client::quit()
+    {
+        this->want_quit = 1;
+    }
+    int Client::is_quiting()
+    {
+        return (this->want_quit);
+    }
     void Client::set_nick(std::string nick)
     {
         this->nickname = nick;

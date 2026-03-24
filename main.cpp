@@ -19,7 +19,7 @@ int main(int argc, char **argv)
     }
 
     std::string password(argv[2]);
-    if (has_white_space(password))
+    if (has_white_space(password) || password.empty())
     {
         std::cerr << "Wrong password format: White space." << std::endl;
         return (1);

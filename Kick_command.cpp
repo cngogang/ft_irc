@@ -14,12 +14,59 @@
 #include "Server.hpp"
 #include "Client.hpp"
 
+int Server::kick_command_channel_checking(std::string channel_name, int user_fd)
+{
+     if (!is_a_channel(channel_name))
+            {
+                send_message(user_fd, ERR_BADCHANMASK(channel_name));
+                return (0);
+            }
+        if (this->channels_line.find(channel_name) == this->channels_line.end())
+            {
+                send_message(user_fd, ERR_NOSUCHCHANNEL(channel_name));	
+                return (0);
+            }
+        if (!this->channels_line[channel_name].Get_operators(user_fd))
+            {
+                send_message(user_fd, ERR_CHANOPRIVSNEEDED(channel_name));
+                return (0);
+            }
+       return (1);
+}
+
+
+int Server::kick_command_user_checking(std::string channel_name, std::string nick, int user_fd, int & member_kicked_fd)
+{
+   
+    if (this->client_line_by_nick.find(nick) == this->client_line_by_nick.end())
+    {
+        send_message(user_fd, ERR_USERNOTINCHANNEL(this->client_line[user_fd].get_nick(), nick, channel_name));
+        return (0);
+    }
+    member_kicked_fd = this->client_line_by_nick[nick]->get_fd_socket();
+    if (!this->channels_line[channel_name].Get_members(member_kicked_fd))
+    {
+        send_message(user_fd, ERR_USERNOTINCHANNEL(this->client_line[user_fd].get_nick(), nick, channel_name));
+        return (0);
+    }
+    return (1);
+            
+}
+
+static void remove_user_from_channel_and_remove_channel_from_user_channel_list(Channel & channel, Client & client)
+{
+    std::vector<std::string>::iterator channel_name_pos;
+    int client_fd = client.get_fd_socket();
+    channel_name_pos =  std::find(client.Channel_list.begin(), client.Channel_list.begin(), channel.Get_name());
+    client.Channel_list.erase(channel_name_pos);
+    channel.remove_members(client_fd);
+}
+
 void Server::command_kick(int fd, Message msg)
 {
     std::vector<std::string> list_channel;
     std::vector<std::string> list_user;
-    std::vector<std::string>::iterator channel_name_pos;
-    int user_fd;
+    int user_fd = 0;
 
     if (msg.params.size() < 2 )
         return ;
@@ -28,44 +75,20 @@ void Server::command_kick(int fd, Message msg)
 
     for (std::vector<std::string>::iterator itc = list_channel.begin(); itc != list_channel.end(); ++itc)
     {
-        if (!is_a_channel(*itc))
-            {
-                send_message(fd, ERR_BADCHANMASK(*itc));
-                continue ;
-            }
-        if (this->channels_line.find(*itc) == this->channels_line.end())
-            {
-                send_message(fd, ERR_NOSUCHCHANNEL(*itc));	
-                continue ;
-            }
-        if (!this->channels_line[*itc].Get_operators(fd))
-            {
-                send_message(fd, ERR_CHANOPRIVSNEEDED(*itc));
-                continue ;
-            }
+        if (!kick_command_channel_checking(*itc, fd))
+            continue ;
         for (std::vector<std::string>::iterator itu = list_user.begin(); itu != list_user.end(); ++itu)
         {   
-            
-            
-            if (this->client_line_by_nick.find(*itu) == this->client_line_by_nick.end())
-            {
-                send_message(fd, ERR_USERNOTINCHANNEL(this->client_line[fd].get_nick(), *itu, *itc));
+            if (!kick_command_user_checking(*itc, *itu, fd, user_fd))
                 continue ;
-            } 
-            user_fd = this->client_line_by_nick[*itu]->get_fd_socket();
-            if (!this->channels_line[*itc].Get_members(user_fd))
-            {
-                send_message(fd, ERR_USERNOTINCHANNEL(this->client_line[fd].get_nick(), *itu, *itc));
-                continue ;
-            }
-            channel_name_pos =  std::find(this->client_line_by_nick[*itu]->Channel_list.begin(), this->client_line_by_nick[*itu]->Channel_list.begin(), *itc);
-            this->client_line_by_nick[*itu]->Channel_list.erase(channel_name_pos);
-            this->channels_line[*itc].remove_members(user_fd);
+            remove_user_from_channel_and_remove_channel_from_user_channel_list(this->channels_line[*itc], *(this->client_line_by_nick[*itu])); 
             if (!this->channels_line[*itc].get_size())
                 this->channels_line.erase(*itc);
             else
-                warn_the_channel(*itc, RPL_KICK(this->client_line[fd].get_nick(), *itu, *itc,  msg.trailing_params));
-            
+            {
+                send_message(user_fd, RPL_KICK(this->client_line[fd].get_nick(), *itu, *itc,  msg.trailing_params));
+                Broadcast_to_the_channel(*itc, RPL_KICK(this->client_line[fd].get_nick(), *itu, *itc,  msg.trailing_params));            
+            }
         }
     }
 }

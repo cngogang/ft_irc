@@ -53,11 +53,6 @@ Server & Server::operator=(const Server & rightOperand)
     return (*this);
 }
 
-void Server::Handle_response()
-{
-    
-}
-
 void Server::get_server_response_form_stdin(char *msg)
 {
     std::string str;
@@ -69,29 +64,6 @@ void Server::get_server_response_form_stdin(char *msg)
     msg[i] = '\0';
 }
 
-
-// void Server::read_bytes_and_build_message(Client current_client)
-// {
-
-// }
-
-
-// static int is_no_new_line(char *buffer_512_bytes)
-// {
-//     int i = 0;
-
-//     for ( ;buffer_512_bytes[i]; ++i)
-//     {
-//         if (buffer_512_bytes[i] == '\n')
-//             return (0);
-//     }
-//     if (i == 1)
-//         return (0);
-//     return (1);
-
-// }
-
-
 void Server::Run()
 {
     try
@@ -100,18 +72,17 @@ void Server::Run()
         Init_command_map();
         Server::is_running = 1;
         signal(SIGINT, Signal_handling);
-        Listen_and_handle_request();
-
+        
     }
     catch(std::exception & e)
     {
         std::cerr << e.what() << errno << std::endl;
     }
+    Listen_and_handle_request();
 }
 
 void Server::command_priv_msg(int fd, Message msg)
 {
-    std::cout << "HERE cmd" << std::endl;
     if (!is_register(fd))
         return ;
     if (is_a_channel(msg.params[0]))
