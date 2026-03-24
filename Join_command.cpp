@@ -14,23 +14,23 @@
 #include "Server.hpp"
 #include "Client.hpp"
 
-void Server::create_a_new_channel(std::map<std::string, Channel> & channel_line, Client & client, std::string channel_name_trim)
+void Server::create_a_new_channel(std::map<std::string, Channel> & channel_line, Client & client, std::string channel_name_trim, std::string key)
 {
 
-        std::cout << "creation channel "<< channel_name_trim << std::endl; 
         channel_line[channel_name_trim] =  Channel(client , client.get_fd_socket(), channel_name_trim);
         channel_line[channel_name_trim].add_operators(client , client.get_fd_socket());
         channel_line[channel_name_trim].Set_name(channel_name_trim);
         client.Channel_list.push_back(channel_name_trim);
-        warn_the_channel(channel_name_trim, RAW_JOIN(client.get_nick(), client.get_username(), client.get_IP_adress(), channel_name_trim));
+        if(!key.empty())
+            channel_line[channel_name_trim].Set_key(key);
+        Broadcast_to_the_channel(channel_name_trim, RAW_JOIN(client.get_nick(), client.get_username(), client.get_IP_adress(), channel_name_trim));
 }
 
 
-void Server::warn_the_channel(std::string channel_name, std::string msg)
+void Server::Broadcast_to_the_channel(std::string channel_name, std::string msg)
 {
     std::map<int, Client *> operators_list = this->channels_line[channel_name].Get_operators();
     std::map<int, Client *> members_list = this->channels_line[channel_name].Get_members();
-
     for (std::map<int, Client *>::iterator it = operators_list.begin(); it != operators_list.end(); ++it)
     {
         send_message((*it).first, msg);
@@ -42,49 +42,43 @@ void Server::warn_the_channel(std::string channel_name, std::string msg)
 
 }
 
-void Server::warn_the_channel(std::string channel_name, std::string msg, int fd)
+int Server::check_channel_access(const int & client_fd, const std::string channel_name, const std::string key)
 {
-    std::map<int, Client *> operators_list = this->channels_line[channel_name].Get_operators();
-    std::map<int, Client *> members_list = this->channels_line[channel_name].Get_members();
-
-    for (std::map<int, Client *>::iterator it = operators_list.begin(); it != operators_list.end(); ++it)
-    {
-        if (fd != (*it).first)
-            send_message((*it).first, msg);
-    }
-    for (std::map<int, Client *>::iterator it = members_list.begin(); it != members_list.end(); ++it)
-    {
-        if (fd != (*it).first)
-            send_message((*it).first, msg);
-    }
-
+         if(this->channels_line[channel_name].is_locked() && key != this->channels_line[channel_name].Get_key())
+        {
+            send_message(client_fd, ERR_BADCHANNELKEY(channel_name));
+            return (0);
+        }
+        else if (this->channels_line[channel_name].is_limited() && this->channels_line[channel_name].is_limited() <= this->channels_line[channel_name].get_size())
+        {
+           send_message(client_fd, ERR_CHANNELISFULL(channel_name));
+           return (0); 
+        }
+        else if(this->channels_line[channel_name].add_members(this->client_line[client_fd], client_fd) == -1)
+        {
+            send_message(client_fd, ERR_INVITEONLYCHAN(channel_name));
+            return (0);
+        }
+        return (1);
 }
+
+
 void Server::join_channel(int client_fd, std::string channel_name, std::string key)
 {
     std::string channel_name_trim = Server::trim_white(channel_name);
     if (!is_a_valid_channel_name(channel_name_trim))
-      {
+    {
         send_message(client_fd, ERR_BADCHANMASK(channel_name));
         return ;        
-      }
+    }
+    std::cout << "try to check key " << channel_name_trim << " of size " << channel_name_trim.size() <<  " this :" << this <<std::endl;
     if (this->channels_line.find(channel_name_trim) == this->channels_line.end())
-       create_a_new_channel(this->channels_line, this->client_line[client_fd], channel_name_trim);
-    else
+       create_a_new_channel(this->channels_line, this->client_line[client_fd], channel_name_trim, key);
+    else if (check_channel_access(client_fd, channel_name, key))
     {
-        
-        if(this->channels_line[channel_name_trim].is_locked() && key != this->channels_line[channel_name_trim].Get_key())
-            send_message(client_fd, ERR_BADCHANNELKEY(channel_name));
-        else if (this->channels_line[channel_name_trim].is_limited() && this->channels_line[channel_name_trim].is_limited() >= this->channels_line[channel_name_trim].get_size())
-            send_message(client_fd, ERR_CHANNELISFULL(channel_name));
-        else if(this->channels_line[channel_name_trim].add_members(this->client_line[client_fd], client_fd) == -1)
-            send_message(client_fd, ERR_INVITEONLYCHAN(channel_name));
-        else 
-        {
-            this->client_line[client_fd].Channel_list.push_back(channel_name_trim);
-            warn_the_channel(channel_name_trim, RAW_JOIN(this->client_line[client_fd].get_nick(), this->client_line[client_fd].get_username(), this->client_line[client_fd].get_IP_adress(), channel_name));
-            join_names_reply(client_fd,  channel_name_trim);
-        }
-
+        this->client_line[client_fd].Channel_list.push_back(channel_name_trim);
+        Broadcast_to_the_channel(channel_name_trim, RAW_JOIN(this->client_line[client_fd].get_nick(), this->client_line[client_fd].get_username(), this->client_line[client_fd].get_IP_adress(), channel_name));
+        join_names_reply(client_fd,  channel_name_trim);
     }     
 }
 
@@ -95,27 +89,23 @@ void Server::command_join(int fd, Message msg)
     std::vector<std::string> list_channel = Server::split_string(msg.params[0], ',');
     std::vector<std::string> keys;
     std::vector<std::string>::iterator key;
-
-    if (msg.params.size() > 2)
-    {
-        keys = Server::split_string(msg.params[1], ',');
-        key = keys.begin();
-        
-    }        
-
+    std::string key_value;
+    if (msg.params.size() > 1)
+        keys = Server::split_string(msg.params[1], ',');    
+    else
+        keys = Server::split_string("", ',');
+    key = keys.begin();
     for (std::vector<std::string>::iterator it = list_channel.begin(); it != list_channel.end(); ++it)
     {
-        if (!keys.empty())
-        {
             if (key == keys.end())
-                --key;
-            join_channel(fd, *it, Server::trim_white(*key));
+                {
+                    --key;
+                    key_value = std::string("");
+                }
+            else
+                key_value = Server::trim_white(*key);
+            join_channel(fd, *it, key_value);
             ++key;
-        }
-        else
-            join_channel(fd, *it, std::string(""));
-
-
     }   
 }
 

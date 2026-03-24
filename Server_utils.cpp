@@ -75,8 +75,13 @@ std::vector<std::string> Server::split_string(std::string str, char delimiter)
     std::stringstream ss(str);
     std::string buffer;
     std::vector<std::string> result;
+    if (str.find(delimiter) == std::string::npos)
+    {
+        result.push_back(Server::trim_white(str));
+        return (result);
+    }
     while (std::getline(ss, buffer, delimiter)) {
-        result.push_back(buffer);
+        result.push_back(Server::trim_white(buffer));
     }
 
     return result;

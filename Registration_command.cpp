@@ -15,10 +15,6 @@
 
 int Server::is_register(int fd)
 {
-    
-    std::cout << "IR NICK : " << this->client_line[fd].get_nick() << std::endl;
-    std::cout << "IR USER : " << this->client_line[fd].get_username() << std::endl;
-    std::cout << "IR PASS client : " << this->client_line[fd].get_pass() << " server : " << this->password << " bool == " << (this->password == this->client_line[fd].get_pass())  << std::endl;
     if (this->client_line[fd].get_nick().empty() || this->client_line[fd].get_username().empty())
         return (0);
     if (this->client_line[fd].get_pass() != this->password)
@@ -91,15 +87,6 @@ void Server::command_user(int fd, Message msg)
         welcome_msg(fd);
 }
 
-
-// static std::string trim_CRLF(std::string str)
-// {
-//     std::string::iterator ite;
-//     ite = --str.end();
-//     while (*ite == '\n' || *ite == '\r' )
-//         str.erase(ite--);
-//     return (str);
-// }
 void Server::command_pass(int fd, Message msg)
 {
     std::string pass;
@@ -113,7 +100,7 @@ void Server::command_pass(int fd, Message msg)
         return ;
     }
 
-    if (msg.params.size() != 1)
+    if (msg.params.size() != 1 || msg.params[0].empty())
     {
         send_message(fd, ERR_NEEDMOREPARAMS(msg.command));
         return ;

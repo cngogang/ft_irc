@@ -23,12 +23,12 @@ class Channel
     Channel();
     ~Channel();
     Channel(const Channel & copy);
-    Channel(Client & first_member, const int & first_member_fd, const std::string channel_name);
+    Channel(Client & first_member, const int & added_member_fd, const std::string channel_name);
     Channel & operator=(const Channel & copy);
     std::map<int, Client*> &  Get_members();
     std::map<int, Client*> &  Get_operators();
-    int add_members(Client & first_member,  const int & first_member_fd);
-    void add_operators(Client & first_member, const int & first_member_fd);
+    int add_members(Client & first_member,  const int & added_member_fd);
+    void add_operators(Client & first_member, const int & added_member_fd);
     void remove_members( int & member_fd);
     void add_to_invitation_list(int member_fd);
     
@@ -40,7 +40,6 @@ class Channel
     void Set_topic(std::string new_topic);
     std::string Get_topic();
     std::string Get_name();
-    
     // int Get_limit();
     std::string Get_key();
     void Set_limit(int limit);
@@ -54,7 +53,8 @@ class Channel
     void Set_name(std::string str_name);
     const Client *Get_operators(int fd);
     const Client *Get_members(int fd);
-    
+    void print_members();
+    void print_operators();
     private :
     int invit_only_mode;
     // int has_key;

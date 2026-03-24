@@ -63,7 +63,6 @@ void Server::split_msg_and_send_it(const int & recipient_fd, std::string  msg)
     extract_prefix(msg, prefix, &start);
     body_size = 510 - static_cast<int>(prefix.size());
     end = std::find(start, msg.end(), ' ');
-
     while (start != msg.end())
     {
         while ( end - start <= body_size)
@@ -83,12 +82,6 @@ void Server::split_msg_and_send_it(const int & recipient_fd, std::string  msg)
         start = temp + 1;
         
     }
-
-
-    
-
-
-
 }
 
 void Server::send_message_to_channel(const int & fd, const Message & msg)
@@ -111,12 +104,12 @@ void Server::send_message_to_channel(const int & fd, const Message & msg)
     target_channel_operators = target_channel.Get_operators();
     for(it = target_channel_operators.begin();it != target_channel_operators.end() ; ++it)
     {
-        // if (fd != (*it).first)
+        if (fd != (*it).first)
             send_message((*it).first, RAW_BROADCAST(this->client_line[fd].get_nick(),this->client_line[fd].get_username(), this->client_line[fd].get_IP_adress(), channel_name, msg.trailing_params));
     } 
     for(it = target_channel_members.begin();it != target_channel_members.end() ; ++it)
     {
-        // if (fd != (*it).first)
+        if (fd != (*it).first)
             send_message((*it).first, RAW_BROADCAST(this->client_line[fd].get_nick(),this->client_line[fd].get_username(), this->client_line[fd].get_IP_adress(), channel_name, msg.trailing_params));
     } 
 } 
@@ -132,26 +125,12 @@ void Server::send_message_to_client(const int & fd, const Message & msg)
 
     if (this->client_line_by_nick.find(client_nick_name) == this->client_line_by_nick.end())
         return ;
-
     sender = this->client_line[fd].get_nick();
     sender_IP = this->client_line[fd].get_IP_adress();
     receiver =  this->client_line_by_nick[client_nick_name]->get_nick();
     raw_msg = Server::trim_white(msg.trailing_params);
     send_message(this->client_line_by_nick[client_nick_name]->get_fd_socket(), RAW_PRIVMSG(sender, sender_IP, receiver,raw_msg));
-
 }
-
-
-// static void CRLF_end_and_send_message(const int & recipient_fd,  std::string & msg)
-// {
-//     if (msg.find("\r\n") == std::string::npos && msg.find("\n") == )
-//     {
-//         msg.push_back('\r');
-//         msg.push_back('\n');
-//     }
-//     if (msg.size() > 512)
-//         split_msg_and_send_it(recipient_fd,msg);
-// }
 
 void Server::build_prefix_and_send_message(const int & sender_fd, const int & recipient_fd, const Message & receiveid_message)
 {
@@ -167,10 +146,10 @@ void Server::build_prefix_and_send_message(const int & sender_fd, const int & re
 
 void Server::welcome_msg(int fd)
 {
-    std::string line_1("001 Welcome message\r\n");
-    std::string line_2("002 ft_IRC\r\n");
-    std::string line_3("003 Created date\r\n");
-    std::string line_4("004 Server info\r\n");
+    std::string line_1("Welcome message\r\n");
+    std::string line_2("ft_IRC\r\n");
+    std::string line_3("Created date\r\n");
+    std::string line_4("Server info\r\n");
 
 
     send_message( fd, line_1);

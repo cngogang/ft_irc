@@ -38,6 +38,12 @@ int Server::invite_arg_checking(int fd, std::string member_name, std::string cha
         send_message(fd, ERR_CHANOPRIVSNEEDED(channel_name));
         return (0);
     }
+    if (this->client_line_by_nick.find(member_name) == this->client_line_by_nick.end())
+    {
+        
+        send_message(fd, ERR_NOSUCHNICK(member_name));
+        return (0);
+    }
     return (1);
     
 }

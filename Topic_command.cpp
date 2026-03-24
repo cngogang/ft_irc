@@ -35,7 +35,7 @@ void Server::set_topic(int fd, std::string channel_name, std::string topic)
 
     }    
     this->channels_line[channel_name].Set_topic(topic);
-    warn_the_channel(channel_name, RAW_TOPIC(this->client_line[fd].get_nick(), this->client_line[fd].get_username(), this->client_line[fd].get_IP_adress(), channel_name, this->channels_line[channel_name].Get_topic()));  
+    Broadcast_to_the_channel(channel_name, RAW_TOPIC(this->client_line[fd].get_nick(), this->client_line[fd].get_username(), this->client_line[fd].get_IP_adress(), channel_name, this->channels_line[channel_name].Get_topic()));  
 }
 
 void Server::display_topic(int fd, std::string channel_name)
@@ -45,7 +45,7 @@ void Server::display_topic(int fd, std::string channel_name)
             send_message(fd, ERR_NOSUCHCHANNEL(channel_name));	
             return  ;
         }
-        else if (!this->channels_line[channel_name].Get_members(fd))
+        else if (!this->channels_line[channel_name].is_in_the_channel(fd))
         {
             send_message(fd, ERR_NOTONCHANNEL(this->client_line[fd].get_nick(), channel_name));
             return ;

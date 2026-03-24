@@ -23,12 +23,11 @@
 
     }
 
-    Channel::Channel( Client & first_member, const int & first_member_fd, const std::string channel_name): invit_only_mode(0), topic_restriction(0), limit_user(0), name(channel_name)
+    Channel::Channel( Client & first_member, const int & added_member_fd, const std::string channel_name): invit_only_mode(0), topic_restriction(0), limit_user(0), name(channel_name)
     {
-      this->operators[first_member_fd] = &first_member;
-      this->host.push_back(first_member_fd);
+      this->operators[added_member_fd] = &first_member;
+      this->host.push_back(added_member_fd);
     }
-
 
     Channel::Channel(const Channel & copy)
     {
@@ -40,38 +39,40 @@
     {
         this->invitation_list.push_back(member_fd);
     }
-
-    int Channel::add_members(Client & first_member,  const int & first_member_fd)
+    void Channel::print_members()
     {
-        std::vector<int>::iterator invit_pos = std::find(this->invitation_list.begin(), this->invitation_list.end(), first_member_fd);
+        for (std::map<int, Client*>::iterator it = this->members.begin(); it != this->members.end(); ++it)
+        {
+            std::cout << "members fd : " << (*it).first << " - addr " << (*it).second << std::endl;
+        }
+    }
+
+    void Channel::print_operators()
+    {
+        for (std::map<int, Client*>::iterator it = this->operators.begin(); it != this->operators.end(); ++it)
+        {
+            std::cout << "OPerator fd : " << (*it).first << " - addr " << (*it).second << std::endl;
+        }
+    }
+    int Channel::add_members(Client & first_member,  const int & added_member_fd)
+    {
+        std::vector<int>::iterator invitation_list_position = std::find(this->invitation_list.begin(), this->invitation_list.end(), added_member_fd);
         if (!this->invit_only_mode)
             {
-                this->members[first_member_fd] = &first_member;
-                this->host.push_back(first_member_fd);
+                this->members[added_member_fd] = &first_member;
+                this->host.push_back(added_member_fd);
             }
-        else if (invit_pos != this->invitation_list.end())
+        else if (invitation_list_position != this->invitation_list.end())
             {
-                this->members[first_member_fd] = &first_member;
-                this->host.push_back(first_member_fd);
-                this->invitation_list.erase(invit_pos);
+                this->members[added_member_fd] = &first_member;
+                this->host.push_back(added_member_fd);
+                this->invitation_list.erase(invitation_list_position);
             }
         else    
             return (-1);
         return(0);
     }
-    // void Channel::remove_operators(Client & member,  int & member_fd)
-    // {
-    //     std::map<int, Client *>::iterator member_list_pos = this->members.find(member_fd);
-    //     std::map<int, Client *>::iterator operator_list_pos = this->operators.find(member_fd);
-
-
-    //     if (member_list_pos != this->members.end())
-    //         this->members.erase(member_list_pos);
-    //     if (operator_list_pos != this->operators.end())
-    //        {
-               
-    //     } this->operators.erase(operator_list_pos);
-    // }
+    
     int Channel::get_size()
     {
         return (this->host.size());
@@ -84,17 +85,16 @@
         int fd_new_operator;
         Client *new_operator;
 
-
         if (member_list_pos != this->members.end())
-            {
+        {
+                host_to_delete = std::find(this->host.begin(), this->host.end(),((*member_list_pos).first));
                 this->members.erase(member_list_pos);
-               host_to_delete = std::find(this->host.begin(), this->host.end(),((*member_list_pos).first));
                this->host.erase(host_to_delete);        
-            }
+        }
         else if (operator_list_pos != this->operators.end())
         {
-            this->operators.erase(operator_list_pos);
             host_to_delete = std::find(this->host.begin(), this->host.end(),((*operator_list_pos).first));
+            this->operators.erase(operator_list_pos);
             this->host.erase(host_to_delete);
             if (this->operators.empty() && !this->members.empty())
             {        
@@ -102,16 +102,15 @@
                 new_operator = this->members[fd_new_operator];
                 add_operators(*new_operator, fd_new_operator);
                 remove_members(fd_new_operator);
-
             }
         }
     }
-     void Channel::add_operators(Client & first_member,  const int & first_member_fd)
+    
+     void Channel::add_operators(Client & first_member,  const int & added_member_fd)
     {
-         this->operators[first_member_fd] = &first_member;
+         this->operators[added_member_fd] = &first_member;
          this->host.push_back(first_member.get_fd_socket());
     }
-
 
     Channel & Channel::operator=(const Channel & rightOperand)
     {
@@ -131,10 +130,11 @@
     
     const Client *Channel::Get_members(int fd)
     {
+        this->print_members();
         if (this->members.find(fd) == this->members.end())
             return (NULL);
         else
-            return (this->operators[fd]);
+            return (this->members[fd]);
     } 
 
     std::string Channel::Get_topic()
@@ -153,6 +153,7 @@
 
     const Client *Channel::Get_operators(int fd)
     {
+        this->print_operators();
         if (this->operators.find(fd) == this->operators.end())
             return (NULL);
         else
