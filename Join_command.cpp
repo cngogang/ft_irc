@@ -23,6 +23,8 @@ void Server::create_a_new_channel(std::map<std::string, Channel> & channel_line,
         client.Channel_list.push_back(channel_name_trim);
         if(!key.empty())
             channel_line[channel_name_trim].Set_key(key);
+        else if (has_white_space(key))
+            send_message(client.get_fd_socket(), std::string("461 MODE :Not enough parameters"));
         Broadcast_to_the_channel(channel_name_trim, RAW_JOIN(client.get_nick(), client.get_username(), client.get_IP_adress(), channel_name_trim));
 }
 
@@ -72,7 +74,7 @@ void Server::join_channel(int client_fd, std::string channel_name, std::string k
         return ;        
     }
     if (this->channels_line.find(channel_name_trim) == this->channels_line.end())
-    create_a_new_channel(this->channels_line, this->client_line[client_fd], channel_name_trim, key);
+        create_a_new_channel(this->channels_line, this->client_line[client_fd], channel_name_trim, key);
     else if (check_channel_access(client_fd, channel_name, key))
     {
         this->client_line[client_fd].Channel_list.push_back(channel_name_trim);
@@ -80,12 +82,6 @@ void Server::join_channel(int client_fd, std::string channel_name, std::string k
         join_names_reply(client_fd,  channel_name_trim);
     }     
 }
-
-// for (std::map<std::string,Channel>::iterator it = this->channels_line.begin(); it != this->channels_line.end(); ++it)
-// {
-//     std::cout << "Channel name : "<< (*it).first << "adress object : " <<  &(*it).second << std::endl;
-// }
-// std::cout << "try to check key " << channel_name_trim << " of size " << channel_name_trim.size() <<  " this :" << this <<std::endl;
 
 
 void Server::command_join(int fd, Message msg)
@@ -141,7 +137,6 @@ void Server::command_names(int fd, Message msg)
         list_channel = Server::split_string(msg.params[0], ',');
     for (std::vector<std::string>::iterator it = list_channel.begin(); it != list_channel.end(); it++)
     {
-
         if (this->channels_line[Server::trim_white(*it)].is_private()) 
             command_response += " * " + this->channels_line[Server::trim_white(*it)].Get_name() + " :";
         else

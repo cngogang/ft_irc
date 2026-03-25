@@ -4,7 +4,7 @@ SRCS = main.cpp\
 	Client.cpp\
 	Server.cpp\
 	Initialization.cpp\
-	Invit_command.cpp\
+	Invite_command.cpp\
 	Join_command.cpp\
 	Kick_command.cpp\
 	Messaging.cpp\
@@ -44,7 +44,7 @@ obj/%.o: %.cpp
 
 # Clean object files
 clean:
-	rm -rf $(OBJS)
+	rm -rf obj 
 
 # Clean everything (objects + executable)
 fclean: clean

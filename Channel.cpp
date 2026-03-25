@@ -199,10 +199,6 @@
     {
         return (!this->key.empty());
     }
-    // int Channel::Get_limit()
-    // {
-    //     return (this->limit_user)
-    // }
 
     std::string Channel::Get_key()
     {
