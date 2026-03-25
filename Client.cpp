@@ -113,3 +113,7 @@
     {   
         return (this->IP_address);
     }
+    void Client::Init_connection(void)
+    {
+        
+    } 

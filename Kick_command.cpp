@@ -34,7 +34,6 @@ int Server::kick_command_channel_checking(std::string channel_name, int user_fd)
     return (1);
 }
 
-
 int Server::kick_command_user_checking(std::string channel_name, std::string nick, int user_fd, int & member_kicked_fd)
 {
    
@@ -87,7 +86,6 @@ void Server::command_kick(int fd, Message msg)
                 this->channels_line.erase(*itc);
             else
                 Broadcast_to_the_channel(*itc, RPL_KICK(this->client_line[fd].get_nick(), *itu, *itc,  msg.trailing_params));            
-            
         }
     }
 }
