@@ -29,6 +29,7 @@ void Server::Create_epoll_instance()
     this->epoll_fd = epoll_create1(0);
     if (this->epoll_fd == -1)
         throw EpollError();
+    std::cout << "Multiplexing ready." << std::endl;
 }
 
 void Server::Create_epoll_instance_and_bind_server_socket()
@@ -87,7 +88,7 @@ void Server::enable_IPv4_connexion()
 {
     int v6only = 0;
 
-    if (setsockopt(this->fd_socket, IPPROTO_IPV6, IPV6_V6ONLY, &v6only, sizeof(v6only)) < 0)
+    if (setsockopt(this->fd_socket, IPPROTO_IPV6, IPV6_V6ONLY, &v6only, sizeof(v6only)))
         std::cerr << "setsockopt IPV6_V6ONLY" << std::endl;
     return ;
     

@@ -44,22 +44,22 @@ void Server::Broadcast_to_the_channel(std::string channel_name, std::string msg)
 
 int Server::check_channel_access(const int & client_fd, const std::string channel_name, const std::string key)
 {
-         if(this->channels_line[channel_name].is_locked() && key != this->channels_line[channel_name].Get_key())
-        {
-            send_message(client_fd, ERR_BADCHANNELKEY(channel_name));
-            return (0);
-        }
-        else if (this->channels_line[channel_name].is_limited() && this->channels_line[channel_name].is_limited() <= this->channels_line[channel_name].get_size())
-        {
-           send_message(client_fd, ERR_CHANNELISFULL(channel_name));
-           return (0); 
-        }
-        else if(this->channels_line[channel_name].add_members(this->client_line[client_fd], client_fd) == -1)
-        {
-            send_message(client_fd, ERR_INVITEONLYCHAN(channel_name));
-            return (0);
-        }
-        return (1);
+        if(this->channels_line[channel_name].is_locked() && key != this->channels_line[channel_name].Get_key())
+    {
+        send_message(client_fd, ERR_BADCHANNELKEY(channel_name));
+        return (0);
+    }
+    else if (this->channels_line[channel_name].is_limited() && this->channels_line[channel_name].is_limited() <= this->channels_line[channel_name].get_size())
+    {
+        send_message(client_fd, ERR_CHANNELISFULL(channel_name));
+        return (0); 
+    }
+    else if(this->channels_line[channel_name].add_members(this->client_line[client_fd], client_fd) == -1)
+    {
+        send_message(client_fd, ERR_INVITEONLYCHAN(channel_name));
+        return (0);
+    }
+    return (1);
 }
 
 
@@ -71,9 +71,8 @@ void Server::join_channel(int client_fd, std::string channel_name, std::string k
         send_message(client_fd, ERR_BADCHANMASK(channel_name));
         return ;        
     }
-    std::cout << "try to check key " << channel_name_trim << " of size " << channel_name_trim.size() <<  " this :" << this <<std::endl;
     if (this->channels_line.find(channel_name_trim) == this->channels_line.end())
-       create_a_new_channel(this->channels_line, this->client_line[client_fd], channel_name_trim, key);
+    create_a_new_channel(this->channels_line, this->client_line[client_fd], channel_name_trim, key);
     else if (check_channel_access(client_fd, channel_name, key))
     {
         this->client_line[client_fd].Channel_list.push_back(channel_name_trim);
@@ -82,6 +81,11 @@ void Server::join_channel(int client_fd, std::string channel_name, std::string k
     }     
 }
 
+// for (std::map<std::string,Channel>::iterator it = this->channels_line.begin(); it != this->channels_line.end(); ++it)
+// {
+//     std::cout << "Channel name : "<< (*it).first << "adress object : " <<  &(*it).second << std::endl;
+// }
+// std::cout << "try to check key " << channel_name_trim << " of size " << channel_name_trim.size() <<  " this :" << this <<std::endl;
 
 
 void Server::command_join(int fd, Message msg)

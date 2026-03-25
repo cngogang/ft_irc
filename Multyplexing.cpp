@@ -68,7 +68,7 @@ void Server::create_a_new_client_and_add_it_to_interest_list()
     {
         std::cerr << e.what() << errno <<  '\n';
     }
-    std::cout << "New connexion : " << get_incoming_connexion_ip(client_addr) << std::endl;
+    std::cout << "Connected to " << get_incoming_connexion_ip(client_addr) << "." << std::endl;
 }
 
 
@@ -81,7 +81,7 @@ void Server::handle_request(int fd)
     msg.fd_issuer = fd;
     AHost::ft_memset(current_client->receive_bytes_static_buffer, 0, 513);
     current_client->byte_read = 1;
-
+    std::cout << "Handling request from " << current_client->get_IP_adress() << "." << std::endl;
     try
     {
         while (current_client->byte_read > 0)
@@ -114,10 +114,10 @@ void Server::Listen_loop()
     struct epoll_event client_event[3000];
     int fd_ready = 0;
 
-
     while(Server::is_running)
     {
         fd_ready = epoll_wait(this->epoll_fd, client_event, 3000, -1);
+        std::cout << "Listening to port : " << this->port << std::endl;
         if (fd_ready == -1)
             break ;    
         for(int i = 0; i < fd_ready; ++i)
@@ -136,6 +136,5 @@ void Server::Listen_loop()
 
 void Server::Listen_and_handle_request()
 {
-    
     Listen_loop();
 }
