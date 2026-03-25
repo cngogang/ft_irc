@@ -37,74 +37,62 @@ class AHost
     AHost(const AHost & copy);
     AHost & operator=(const AHost & rightOperand);
     void copy_host_connection_param(const AHost & RightOperand);
-    //  void copy_host_connection_info(const struct AHost & RightOperand);
     static  void addrinfo_memset(struct addrinfo *ai);
     virtual void Init_connection(void) = 0;
     void memset_param_connexion();
-    // void set_fd_socket4(int fd);
-    // int get_fd_socket4();
     void set_fd_socket(int fd);
     int get_fd_socket() const;
     struct sockaddr_in *get_sockaddr_in();
     struct sockaddr_in6 *get_sockaddr_in6();
-    // void copy_host_connection_info();
+
     class BindError : public std::exception
     {
                 public:
                 virtual const char *what() const throw();
-                // void printError() const throw();
     };
     class SocketError : public std::exception
     {
                 public:
                 virtual const char *what() const throw();
-                // void printError() const throw();
     };
 
     class EpollError : public std::exception
     {
                 public:
                 virtual const char *what() const throw();
-                // void printError() const throw();
     };
 
     class ListenError : public std::exception
     {
                 public:
                 virtual const char *what() const throw();
-                // void printError() const throw();
     };
 
     class EpollWaitError : public std::exception
     {
                 public:
                 virtual const char *what() const throw();
-                // void printError() const throw();
     };
     class EpollCtlError : public std::exception
     {
                 public:
                 virtual const char *what() const throw();
-                // void printError() const throw();
     };
     class fcntlError : public std::exception
     {
                 public:
                 virtual const char *what() const throw();
-                // void printError() const throw();
     };
     class recvError : public std::exception
     {
                 public:
                 virtual const char *what() const throw();
-                // void printError() const throw();
     };
 
     class sendError : public std::exception
     {
                 public:
                 virtual const char *what() const throw();
-                // void printError() const throw();
     };
     static void *ft_memset(void *s, int c, size_t n);
     socklen_t size_addr;

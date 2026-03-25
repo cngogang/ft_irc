@@ -92,7 +92,7 @@ void Server::send_message_to_channel(const int & fd, const Message & msg)
     std::map<int, Client *> target_channel_members;
     std::map<int, Client *> target_channel_operators;
 
-    if (this->channels_line.find(channel_name) == this->channels_line.end())
+    if (this->channels_line.find(channel_name) == this->channels_line.end() || msg.trailing_params.empty())
         return ;
     if (!this->channels_line[channel_name].is_in_the_channel(fd))
     {
@@ -125,10 +125,12 @@ void Server::send_message_to_client(const int & fd, const Message & msg)
 
     if (this->client_line_by_nick.find(client_nick_name) == this->client_line_by_nick.end())
         return ;
+    raw_msg = Server::trim_white(msg.trailing_params);
+    if (raw_msg.empty())
+        return ;
     sender = this->client_line[fd].get_nick();
     sender_IP = this->client_line[fd].get_IP_adress();
     receiver =  this->client_line_by_nick[client_nick_name]->get_nick();
-    raw_msg = Server::trim_white(msg.trailing_params);
     send_message(this->client_line_by_nick[client_nick_name]->get_fd_socket(), RAW_PRIVMSG(sender, sender_IP, receiver,raw_msg));
 }
 

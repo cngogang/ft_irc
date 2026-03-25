@@ -112,28 +112,6 @@ const char *AHost::sendError::what() const throw()
         return ("recv function issue number :");
 }
 
-// void AHost::copy_host_connection_info(const struct AHost & RightOperand)
-// {
-//    this->connexion_info_v6.ai_flags = RightOperand.connection_info.ai_flags; 
-//    this->connexion_info_v6.ai_family = RightOperand.connection_info.ai_family; 
-//    this->connexion_info_v6.ai_socktype = RightOperand.connection_info.ai_socktype; 
-//    this->connexion_info_v6.ai_protocol = RightOperand.connection_info.ai_protocol; 
-//    this->connexion_info_v6.ai_addrlen = RightOperand.connection_info.ai_addrlen; 
-//    this->connexion_info_v6.ai_addr = RightOperand.connection_info.ai_addr; 
-//    this->connection_info.ai_canonname = RightOperand.connection_info.ai_canonname; 
-//    this->connection_info.ai_next = RightOperand.connection_info.ai_next; 
-// }
-
-// void AHost::set_fd_socket4(int fd)
-// {
-//  this->fd_socket = fd;   
-// }
-
-// int AHost::get_fd_socket4()
-// {
-//     return (this->fd_socket);
-// }
-
 void AHost::set_fd_socket(int fd)
 {
     this->fd_socket = fd;

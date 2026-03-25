@@ -20,7 +20,7 @@ std::string Server::trim_white(std::string str)
     if (str.begin() == str.end())
         return (str);
     ite = --str.end();
-    while (*ite <= 32 && str.size())
+    while (*ite <= 32 && ite >= str.begin())
         str.erase(ite--);
     return (str);
 }
@@ -46,7 +46,7 @@ int Server::is_a_valid_nickname(std::string nick)
 int Server::is_a_valid_channel_name(std::string channel_name)
 {
     std::string::iterator it = channel_name.begin();
-    if (channel_name.size() > 50)
+    if (channel_name.size()  < 2 && channel_name.size() > 50)
         return (0);
     if (*it != '#' && *it != '&')
         return (0);
@@ -89,6 +89,7 @@ std::vector<std::string> Server::split_string(std::string str, char delimiter)
 
 void Server::add_channel_client_to_string(Channel & channel, std::string & msg)
 {
+
     for (std::map<int, Client *>::iterator it = channel.Get_operators().begin(); it != channel.Get_operators().end(); ++it)
     {
         msg += " @" + ((*it).second)->get_nick();

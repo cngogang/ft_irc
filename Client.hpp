@@ -16,7 +16,6 @@
 class Client : public AHost
 {
     public:
-
     Client();
     ~Client();
     Client(int fd);
@@ -51,7 +50,7 @@ class Client : public AHost
     int registered;
     int want_quit;
     std::vector<std::string> Channel_list;
-    // std::map<std::string, Channel>;
+
     private:
     std::string IP_address;
     std::string nickname;

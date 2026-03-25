@@ -16,22 +16,22 @@
 
 int Server::kick_command_channel_checking(std::string channel_name, int user_fd)
 {
-     if (!is_a_channel(channel_name))
-            {
-                send_message(user_fd, ERR_BADCHANMASK(channel_name));
-                return (0);
-            }
-        if (this->channels_line.find(channel_name) == this->channels_line.end())
-            {
-                send_message(user_fd, ERR_NOSUCHCHANNEL(channel_name));	
-                return (0);
-            }
-        if (!this->channels_line[channel_name].Get_operators(user_fd))
-            {
-                send_message(user_fd, ERR_CHANOPRIVSNEEDED(channel_name));
-                return (0);
-            }
-       return (1);
+    if (!is_a_channel(channel_name))
+    {
+        send_message(user_fd, ERR_BADCHANMASK(channel_name));
+        return (0);
+    }
+    if (this->channels_line.find(channel_name) == this->channels_line.end())
+    {
+        send_message(user_fd, ERR_NOSUCHCHANNEL(channel_name));	
+        return (0);
+    }
+    if (!this->channels_line[channel_name].Get_operators(user_fd))
+    {
+        send_message(user_fd, ERR_CHANOPRIVSNEEDED(channel_name));
+        return (0);
+    }
+    return (1);
 }
 
 
@@ -44,7 +44,7 @@ int Server::kick_command_user_checking(std::string channel_name, std::string nic
         return (0);
     }
     member_kicked_fd = this->client_line_by_nick[nick]->get_fd_socket();
-    if (!this->channels_line[channel_name].Get_members(member_kicked_fd))
+    if (!this->channels_line[channel_name].is_in_the_channel(member_kicked_fd))
     {
         send_message(user_fd, ERR_USERNOTINCHANNEL(this->client_line[user_fd].get_nick(), nick, channel_name));
         return (0);
@@ -82,13 +82,12 @@ void Server::command_kick(int fd, Message msg)
             if (!kick_command_user_checking(*itc, *itu, fd, user_fd))
                 continue ;
             remove_user_from_channel_and_remove_channel_from_user_channel_list(this->channels_line[*itc], *(this->client_line_by_nick[*itu])); 
+            send_message(user_fd, RPL_KICK(this->client_line[fd].get_nick(), *itu, *itc,  msg.trailing_params));
             if (!this->channels_line[*itc].get_size())
                 this->channels_line.erase(*itc);
             else
-            {
-                send_message(user_fd, RPL_KICK(this->client_line[fd].get_nick(), *itu, *itc,  msg.trailing_params));
                 Broadcast_to_the_channel(*itc, RPL_KICK(this->client_line[fd].get_nick(), *itu, *itc,  msg.trailing_params));            
-            }
+            
         }
     }
 }

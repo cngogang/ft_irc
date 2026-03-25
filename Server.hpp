@@ -55,7 +55,6 @@ class Server : public AHost
     void Handle_response();
     void memset_param_connexion();
     void Init_connection();
-    // void Set_connexion_v4();
     void Set_connexion_v6();
     void enable_IPv4_connexion();
     void make_socket_non_blocking(int fd);
@@ -99,7 +98,6 @@ class Server : public AHost
     void set_client_buffer(Client & client);
     void join_names_reply(int fd, std::string channel_name);
     void Broadcast_to_the_channel(std::string channel_name, std::string msg);
-    // void Broadcast_to_the_channel(std::string channel_name, std::string msg, int fd);
     void apply_mode(int fd, Message msg, char key);
     void query_mode(int fd, Message msg);
     int  check_mod_arg(int fd, Message msg);
@@ -111,8 +109,6 @@ class Server : public AHost
     void command_mode_option_user_limit(int fd, Message msg);
     int kick_command_channel_checking(std::string channel_name, int user_fd);
     int kick_command_user_checking(std::string channel_name, std::string nick, int user_fd, int & member_kickec_fd);
-    // int check_key_arg(int fd, std::string key, Message msg);
-    // std::string trim_white(std::string str);
     void create_a_new_channel(std::map<std::string, Channel> & channel_line, Client & client, std::string channel_name_trim, std::string key);
     void send_message( const int & recipient_fd, std::string  msg);
     std::map<int, Client> client_line;
