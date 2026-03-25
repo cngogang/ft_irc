@@ -65,12 +65,14 @@ void Server::Init_command_map()
 
 void Server::make_socket_non_blocking(int fd)
 {
-    int original_bitmask_flags_fd;
+    // int original_bitmask_flags_fd;
 
-    original_bitmask_flags_fd = fcntl(fd, F_GETFL, 0);
-    if (original_bitmask_flags_fd == -1)
-        throw fcntlError();
-    if (fcntl(fd, F_SETFL, original_bitmask_flags_fd | O_NONBLOCK))
+    // original_bitmask_flags_fd = fcntl(fd, F_GETFL, 0);
+    // std::cout << "Falg :"<< original_bitmask_flags_fd << std::endl;
+    // if (original_bitmask_flags_fd == -1)
+    //     throw fcntlError();
+    // if (fcntl(fd, F_SETFL, original_bitmask_flags_fd | O_NONBLOCK))
+    if (fcntl(fd, F_SETFL, O_NONBLOCK))    
         throw fcntlError();
 }
 void Server::bind_socket()

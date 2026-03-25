@@ -13,17 +13,17 @@
 #include "Server.hpp"
 #include "Client.hpp"
 
-int Server::check_errno_value()
-{
-    std::cout << "check erno" << std::endl;
-    if (errno == EAGAIN)
-    {
-        errno = 0;
-        return (0);
-    }
-    else
-        throw recvError();
-}
+// int Server::check_errno_value()
+// {
+//     std::cout << "check erno" << std::endl;
+//     if (errno == EAGAIN)
+//     {
+//         errno = 0;
+//         return (0);
+//     }
+//     else
+//         throw recvError();
+// }
 
 static std::string get_incoming_connexion_ip(struct sockaddr_storage client_addr)
 {
@@ -89,7 +89,8 @@ void Server::handle_request(int fd)
             bytes_received = receive_bytes(*current_client);
             
             build_message_object_and_proceed_it(*current_client, msg);
-            if (current_client->byte_read == -1 && !check_errno_value())
+            // if (current_client->byte_read == -1 && !check_errno_value())
+            if (current_client->byte_read == -1)   
                 break ;
             if (current_client->byte_read == 0|| current_client->is_quiting())
             {
