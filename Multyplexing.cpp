@@ -90,9 +90,10 @@ void Server::handle_request(int fd)
             
             build_message_object_and_proceed_it(*current_client, msg);
             // if (current_client->byte_read == -1 && !check_errno_value())
+             std::cout << "is quiting == " << this->client_line[fd].is_quiting() << std::endl;
             if (current_client->byte_read == -1)   
                 break ;
-            if (current_client->byte_read == 0|| current_client->is_quiting())
+            if (current_client->byte_read == 0 || current_client->is_quiting())
             {
 
                 this->client_line_by_nick.erase(this->client_line[fd].get_nick());
@@ -100,6 +101,7 @@ void Server::handle_request(int fd)
                 std::cout << "Connexion closed with fd : " << fd << std::endl; 
                 break ;
             }
+
         }    
     }
     catch(const std::exception& e)

@@ -94,6 +94,7 @@ class Server : public AHost
     void command_topic(int fd, Message msg);
     int  invite_arg_checking(int fd, std::string member_name, std::string channel_name);
     void command_invite(int fd, Message msg);
+    void command_quit(int fd, Message msg);
     void invite_member(int fd, std::string member_name, std::string channel_name);
     void set_client_buffer(Client & client);
     void join_names_reply(int fd, std::string channel_name);

@@ -48,7 +48,7 @@ void Server::Init_command_map()
     this->commands["PRIVMSG"] = &Server::command_priv_msg;
     this->commands["JOIN"] = &Server::command_join;
     this->commands["PART"] = &Server::command_part;
-    this->commands["QUIT"] = &Server::command_part;
+    this->commands["QUIT"] = &Server::command_quit;
     this->commands["NAMES"] = &Server::command_names;
     this->commands["WHO"] = &Server::command_names;
     this->commands["KICK"] = &Server::command_kick;

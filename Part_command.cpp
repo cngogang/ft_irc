@@ -48,24 +48,34 @@ void Server::part_channel(int client_fd, std::string channel_name, std::string r
 void Server::command_part(int fd, Message msg)
 {    
     std::vector<std::string> list_channel;
-    int leaving = 0;
+    // int leaving = 0;
     std::string reason = msg.params.size() > 1 ? Server::trim_white(msg.params[1]) : "";
     
     if (!msg.params.size())
-    {
         list_channel = this->client_line[fd].Channel_list;
-        leaving = 1;
-    }
     else
-    list_channel = Server::split_string(msg.params[0], ',');
+        list_channel = Server::split_string(msg.params[0], ',');
     for (std::vector<std::string>::iterator it = list_channel.begin(); it != list_channel.end(); ++it)
     {
         part_channel(fd, *it, reason);
     }
-    if (leaving)
-    this->client_line[fd].quit();   
+    // if (leaving)
+    // this->client_line[fd].quit();   
 }
 
+void Server::command_quit(int fd, Message msg)
+{
+    std::vector<std::string> list_channel;
+    std::string reason = !msg.trailing_params.empty() ? msg.trailing_params : "";  
+    
+    for (std::vector<std::string>::iterator it = list_channel.begin(); it != list_channel.end(); ++it)
+    {
+        part_channel(fd, *it, reason);
+    }
+    this->client_line[fd].quit();
+    std::cout << "INSIDE QUIT is quiting == " << this->client_line[fd].is_quiting() << std::endl;
+
+}
 // for (std::map<std::string,Channel>::iterator it = this->channels_line.begin(); it != this->channels_line.end(); ++it)
 // {
     //     std::cout << "Channel name : "<< (*it).first << "adress object : " <<  &(*it).second << std::endl;

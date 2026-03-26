@@ -29,7 +29,7 @@ void Server::command_nick(int fd, Message msg)
     std::string nick;
 
     
-    if (is_register(fd))
+    if (!this->client_line[fd].get_nick().empty())
     {
         send_message(fd, ERR_ALREADYREGISTRED);
         return ;
@@ -66,7 +66,7 @@ void Server::command_user(int fd, Message msg)
     std::string servername;
     std::string realname;
     
-    if (is_register(fd))
+    if (!this->client_line[fd].get_username().empty())
     {
         send_message(fd, ERR_ALREADYREGISTRED);
         return ;
@@ -94,7 +94,7 @@ void Server::command_pass(int fd, Message msg)
 
     
        
-    if (is_register(fd))
+    if (!this->client_line[fd].get_pass().empty())
     {
         send_message(fd, ERR_ALREADYREGISTRED);
         return ;

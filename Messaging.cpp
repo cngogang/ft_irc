@@ -148,10 +148,17 @@ void Server::build_prefix_and_send_message(const int & sender_fd, const int & re
 
 void Server::welcome_msg(int fd)
 {
-    std::string line_1("Welcome message\r\n");
-    std::string line_2("ft_IRC\r\n");
-    std::string line_3("Created date\r\n");
-    std::string line_4("Server info\r\n");
+    Client &client = this->client_line[fd];
+    char buff[64];
+    time_t now = time(NULL);
+    struct tm* t = localtime(&now);
+    strftime(buff, sizeof(buff), "%Y-%m-%d %H:%M:%S", t);
+
+
+    std::string line_1(":Welcome to the 42 Network, " + client.get_nick() + "[!" + client.get_username() + "@" + client.get_IP_adress() +"]\r\n");
+    std::string line_2("Your host is ircserv, running 1.0 version\r\n");
+    std::string line_3("This server was created at " + std::string(buff) +   "\r\n");
+    std::string line_4("Command: NAMES, JOIN, PRIVMSG, PART, QUIT, MODE +/- ltoki\r\n");
 
 
     send_message( fd, line_1);

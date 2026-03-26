@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
+#include <ctime>
 #include "Irc_format.hpp"
 #define MAX_CLIENT 3000
 
