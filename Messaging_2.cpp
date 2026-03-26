@@ -82,7 +82,7 @@ void Server::proceed_message(Client & current_client, Message & msg)
         else
             send_message(current_client.get_fd_socket(), ERR_NOTREGISTERED);
     }
-    else if (msg.command == "CAP")
+    else if (msg.command == "CAP" || msg.command.empty())
         return ;
     else
         send_message(current_client.get_fd_socket(),ERR_UNKNOWNCOMMAND(msg.command));

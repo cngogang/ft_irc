@@ -46,12 +46,18 @@ void Server::Broadcast_to_the_channel(std::string channel_name, std::string msg)
 
 int Server::check_channel_access(const int & client_fd, const std::string channel_name, const std::string key)
 {
-        if(this->channels_line[channel_name].is_locked() && key != this->channels_line[channel_name].Get_key())
+    
+    int channel_limit = this->channels_line[channel_name].is_limited();
+    
+    
+    if (this->channels_line[channel_name].is_in_the_channel(client_fd))
+        return (0);
+    if(this->channels_line[channel_name].is_locked() && key != this->channels_line[channel_name].Get_key())
     {
         send_message(client_fd, ERR_BADCHANNELKEY(channel_name));
         return (0);
     }
-    else if (this->channels_line[channel_name].is_limited() && this->channels_line[channel_name].is_limited() <= this->channels_line[channel_name].get_size())
+    else if (channel_limit && channel_limit <= this->channels_line[channel_name].get_size())
     {
         send_message(client_fd, ERR_CHANNELISFULL(channel_name));
         return (0); 
@@ -92,20 +98,24 @@ void Server::command_join(int fd, Message msg)
     std::string key_value;
     if (msg.params.size() > 1)
         keys = Server::split_string(msg.params[1], ',');    
-    else
+    else if (msg.params.size() == 1)
         keys = Server::split_string("", ',');
+    else
+        return;
     key = keys.begin();
+    if(keys.size() == 1 && *key == "0")
+        this->command_part(fd, Message());
     for (std::vector<std::string>::iterator it = list_channel.begin(); it != list_channel.end(); ++it)
     {
-            if (key == keys.end())
-                {
-                    --key;
-                    key_value = std::string("");
-                }
-            else
-                key_value = Server::trim_white(*key);
-            join_channel(fd, *it, key_value);
-            ++key;
+        if (key == keys.end())
+            {
+                --key;
+                key_value = std::string("");
+            }
+        else
+            key_value = Server::trim_white(*key);
+        join_channel(fd, *it, key_value);
+        ++key;
     }   
 }
 
@@ -114,6 +124,8 @@ void Server::join_names_reply(int fd, std::string channel_name)
 {
     std::string names;
     Server::add_channel_client_to_string(this->channels_line[channel_name], names);
+    if (!this->channels_line[channel_name].Get_topic().empty())
+        send_message(fd,  RPL_TOPIC(this->client_line[fd].get_nick(), channel_name, this->channels_line[channel_name].Get_topic()));
     send_message(fd, RPL_NAMREPLY(this->client_line[fd].get_nick(), channel_name, names));
     send_message(fd, RPL_ENDOFNAMES(this->client_line[fd].get_nick(), channel_name));
 }

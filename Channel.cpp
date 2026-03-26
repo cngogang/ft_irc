@@ -54,20 +54,22 @@
             std::cout << "OPerator fd : " << (*it).first << " - addr " << (*it).second << std::endl;
         }
     }
+
     int Channel::add_members(Client & first_member,  const int & added_member_fd)
     {
         std::vector<int>::iterator invitation_list_position = std::find(this->invitation_list.begin(), this->invitation_list.end(), added_member_fd);
+
         if (!this->invit_only_mode)
-            {
-                this->members[added_member_fd] = &first_member;
-                this->host.push_back(added_member_fd);
-            }
+        {
+            this->members[added_member_fd] = &first_member;
+            this->host.push_back(added_member_fd);
+        } 
         else if (invitation_list_position != this->invitation_list.end())
-            {
-                this->members[added_member_fd] = &first_member;
-                this->host.push_back(added_member_fd);
-                this->invitation_list.erase(invitation_list_position);
-            }
+        {
+            this->members[added_member_fd] = &first_member;
+            this->host.push_back(added_member_fd);
+            this->invitation_list.erase(invitation_list_position);
+        }
         else    
             return (-1);
         return(0);
