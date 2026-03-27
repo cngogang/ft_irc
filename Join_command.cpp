@@ -96,22 +96,24 @@ void Server::command_join(int fd, Message msg)
     std::vector<std::string> keys;
     std::vector<std::string>::iterator key;
     std::string key_value;
+
     if (msg.params.size() > 1)
         keys = Server::split_string(msg.params[1], ',');    
     else if (msg.params.size() == 1)
         keys = Server::split_string("", ',');
     else
         return;
+    
     key = keys.begin();
     if(keys.size() == 1 && *key == "0")
         this->command_part(fd, Message());
     for (std::vector<std::string>::iterator it = list_channel.begin(); it != list_channel.end(); ++it)
     {
         if (key == keys.end())
-            {
-                --key;
-                key_value = std::string("");
-            }
+        {
+            --key;
+            key_value = std::string("");
+        }
         else
             key_value = Server::trim_white(*key);
         join_channel(fd, *it, key_value);

@@ -91,13 +91,15 @@
         {
                 host_to_delete = std::find(this->host.begin(), this->host.end(),((*member_list_pos).first));
                 this->members.erase(member_list_pos);
-               this->host.erase(host_to_delete);        
+               this->host.erase(host_to_delete); 
+               std::cout << "ERASE MEMBERS" << std::endl;       
         }
         else if (operator_list_pos != this->operators.end())
         {
             host_to_delete = std::find(this->host.begin(), this->host.end(),((*operator_list_pos).first));
             this->operators.erase(operator_list_pos);
             this->host.erase(host_to_delete);
+            std::cout << "ERASE OPERATOR" << std::endl;
             if (this->operators.empty() && !this->members.empty())
             {        
                 fd_new_operator = *(this->host.begin());
