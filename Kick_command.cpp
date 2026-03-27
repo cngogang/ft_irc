@@ -55,8 +55,10 @@ int Server::kick_command_user_checking(std::string channel_name, std::string nic
 static void remove_user_from_channel_and_remove_channel_from_user_channel_list(Channel & channel, Client & client)
 {
     std::vector<std::string>::iterator channel_name_pos;
+    std::vector<int>::iterator user_pos_channel_list;
+
     int client_fd = client.get_fd_socket();
-    channel_name_pos =  std::find(client.Channel_list.begin(), client.Channel_list.begin(), channel.Get_name());
+    channel_name_pos =  std::find(client.Channel_list.begin(), client.Channel_list.end(), channel.Get_name());
     client.Channel_list.erase(channel_name_pos);
     channel.remove_members(client_fd);
 }
