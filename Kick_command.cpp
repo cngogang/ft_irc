@@ -84,6 +84,11 @@ void Server::command_kick(int fd, Message msg)
                 continue ;
             remove_user_from_channel_and_remove_channel_from_user_channel_list(this->channels_line[*itc], *(this->client_line_by_nick[*itu])); 
             send_message(user_fd, RPL_KICK(this->client_line[fd].get_nick(), *itu, *itc,  msg.trailing_params));
+            if (this->channels_line[*itc].is_a_promotion_happening())
+            {
+                this->channels_line[*itc].promotion_off();
+
+            }
             if (!this->channels_line[*itc].get_size())
                 this->channels_line.erase(*itc);
             else
