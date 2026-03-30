@@ -14,6 +14,8 @@
 #include "Server.hpp"
 #include "Client.hpp"
 
+
+
 void Server::create_a_new_channel(std::map<std::string, Channel> & channel_line, Client & client, std::string channel_name_trim, std::string key)
 {
 
@@ -21,10 +23,8 @@ void Server::create_a_new_channel(std::map<std::string, Channel> & channel_line,
         channel_line[channel_name_trim].add_operators(client , client.get_fd_socket());
         channel_line[channel_name_trim].Set_name(channel_name_trim);
         client.Channel_list.push_back(channel_name_trim);
-        if(!key.empty())
+        if(!key.empty() && !has_white_space(key))
             channel_line[channel_name_trim].Set_key(key);
-        else if (has_white_space(key))
-            send_message(client.get_fd_socket(), std::string("461 MODE :Not enough parameters"));
         Broadcast_to_the_channel(channel_name_trim, RAW_JOIN(client.get_nick(), client.get_username(), client.get_IP_adress(), channel_name_trim));
 }
 
@@ -139,7 +139,7 @@ void Server::command_names(int fd, Message msg)
     std::vector<std::string> list_channel;
     std::string command_response = ":ft_irc 353 " + this->client_line[fd].get_nick() + ":";
     if (!msg.params.size())
-    {
+    { 
         list_channel = this->client_line[fd].Channel_list;
         for (std::map<std::string, Channel>::iterator it = this->channels_line.begin(); it != this->channels_line.end(); ++it)
         {

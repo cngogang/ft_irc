@@ -35,6 +35,7 @@ class Channel
     int is_limited();
     int is_locked();
     int get_size();
+
     void Set_topic(std::string new_topic);
     std::string Get_topic();
     std::string Get_name();
@@ -52,11 +53,15 @@ class Channel
     const Client *Get_members(int fd);
     void print_members();
     void print_operators();
-    
+    void promotion_on();
+    void promotion_off();
+    int is_a_promotion_happening();
+
     private :
     int invit_only_mode;
     int topic_restriction;
     int limit_user;
+    int operator_promotion;
     std::vector<int> host;
     std::vector<int> invitation_list;
     std::map<int, Client*> operators;

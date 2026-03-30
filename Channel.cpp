@@ -14,7 +14,7 @@
 #include "Channel.hpp"
 
 
-    Channel::Channel():invit_only_mode(0), topic_restriction(0), limit_user(0)
+    Channel::Channel():invit_only_mode(0), topic_restriction(0), limit_user(0), operator_promotion(0)
     {
 
     }
@@ -23,7 +23,7 @@
 
     }
 
-    Channel::Channel( Client & first_member, const int & added_member_fd, const std::string channel_name): invit_only_mode(0), topic_restriction(0), limit_user(0), name(channel_name)
+    Channel::Channel( Client & first_member, const int & added_member_fd, const std::string channel_name): invit_only_mode(0), topic_restriction(0), limit_user(0), operator_promotion(0),name(channel_name)
     {
       this->operators[added_member_fd] = &first_member;
       this->host.push_back(added_member_fd);
@@ -61,11 +61,13 @@
 
         if (!this->invit_only_mode)
         {
+            std::cout << "Member ADD  without invitation " << std::endl;
             this->members[added_member_fd] = &first_member;
             this->host.push_back(added_member_fd);
         } 
         else if (invitation_list_position != this->invitation_list.end())
         {
+            std::cout << "Member ADD  with invitation " << std::endl;
             this->members[added_member_fd] = &first_member;
             this->host.push_back(added_member_fd);
             this->invitation_list.erase(invitation_list_position);
@@ -92,20 +94,19 @@
                 host_to_delete = std::find(this->host.begin(), this->host.end(),((*member_list_pos).first));
                 this->members.erase(member_list_pos);
                this->host.erase(host_to_delete); 
-               std::cout << "ERASE MEMBERS" << std::endl;       
         }
         else if (operator_list_pos != this->operators.end())
         {
             host_to_delete = std::find(this->host.begin(), this->host.end(),((*operator_list_pos).first));
             this->operators.erase(operator_list_pos);
             this->host.erase(host_to_delete);
-            std::cout << "ERASE OPERATOR" << std::endl;
             if (this->operators.empty() && !this->members.empty())
             {        
                 fd_new_operator = *(this->host.begin());
                 new_operator = this->members[fd_new_operator];
                 add_operators(*new_operator, fd_new_operator);
                 remove_members(fd_new_operator);
+                this->promotion_on();
             }
         }
     }
@@ -183,6 +184,7 @@
 
     int Channel::is_in_the_channel(int fd)
     {
+        std::cout << "is_in_the_channel call" <<std::endl;
         for(std::vector<int>::iterator it = this->host.begin(); it != this->host.end(); ++it)
         {
             if (*it == fd)
@@ -236,4 +238,16 @@
     {
         if(this->topic_restriction)
             this->topic_restriction = 0;
+    }
+    int Channel::is_a_promotion_happening()
+    {
+        return(this->operator_promotion);
+    }
+    void Channel::promotion_on()
+    {
+        this->operator_promotion = 1;
+    }
+    void Channel::promotion_off()
+    {
+        this->operator_promotion = 0;
     }

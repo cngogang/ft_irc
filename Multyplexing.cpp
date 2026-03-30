@@ -13,18 +13,6 @@
 #include "Server.hpp"
 #include "Client.hpp"
 
-// int Server::check_errno_value()
-// {
-//     std::cout << "check erno" << std::endl;
-//     if (errno == EAGAIN)
-//     {
-//         errno = 0;
-//         return (0);
-//     }
-//     else
-//         throw recvError();
-// }
-
 static std::string get_incoming_connexion_ip(struct sockaddr_storage client_addr)
 {
     char ip_str[INET6_ADDRSTRLEN];
@@ -72,6 +60,7 @@ void Server::create_a_new_client_and_add_it_to_interest_list()
 }
 
 
+
 void Server::handle_request(int fd)
 {
     Client *current_client = &(this->client_line[fd]);
@@ -89,13 +78,12 @@ void Server::handle_request(int fd)
             bytes_received = receive_bytes(*current_client);
             
             build_message_object_and_proceed_it(*current_client, msg);
-            // if (current_client->byte_read == -1 && !check_errno_value())
-             std::cout << "is quiting == " << this->client_line[fd].is_quiting() << std::endl;
             if (current_client->byte_read == -1)   
                 break ;
             if (current_client->byte_read == 0 || current_client->is_quiting())
             {
 
+                command_part(fd,Message());
                 this->client_line_by_nick.erase(this->client_line[fd].get_nick());
                 this->client_line.erase(fd);
                 std::cout << "Connexion closed with fd : " << fd << std::endl; 
